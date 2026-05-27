@@ -255,9 +255,19 @@
     </div>
 
     <!-- Mediapipe Js demos -->
-    <div> 
-        <script src="https://pjbelo.github.io/mediapipe-js-demos/"></script>
+   <div class="container">
+        <h1>MediaPipe Hand Tracking</h1>
+        <p id="status">Loading MediaPipe Models...</p>
+        
+        <div class="video-container">
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="output_canvas"></canvas>
+        </div>
+        
+        <button id="webcamButton" class="btn" disabled>Enable Webcam</button>
     </div>
+
+    <script type="module" src="app.js"></script>
 
 
     
