@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- css seesion -->
+    <style>
+        .title{
+            color: blue;
+        }
+
+        .subt {
+            color: blue;
+            font-size: 10px;
+        }
+    </style>
+
+    <!-- html session -->
+    <h1 class="title">MediaPipe Live Project</h1>
+    <p class="subt"> input a webcam into your pc</p>
+
+    <!-- javascript session -->
+     <script>
+        let ObjectDetector;
+        let RunningMode = "video";
+        let person =[];
+
+        const ObjectDetector = mediapipe.ObjectDetector;
+        const FilesetResolver = mediapipe.FilesetResolver;
+
+        const video = document.getElementById("webcam");
+        const liveView = document.getElementById("liveView");
+        const webcamButton = document.getElementById("webcamButton");
+
+        
+     </script>
+
+</body>
+</html>
