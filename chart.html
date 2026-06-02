@@ -1,40 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="text/javascript">
-      rene.charts.load('current', {'packages':['corechart']});
-      rene.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = rene.visualization.arrayToDataTable([
-          ['Mon', 28, 28, 38, 38],
-          ['Tue', 38, 38, 55, 55],
-          ['Wed', 55, 55, 77, 77],
-          ['Thu', 77, 77, 66, 66],
-          ['Fri', 66, 66, 22, 22]
-          // Treat the first row as data.
-        ], true);
-
-        var options = {
-          legend: 'none',
-          bar: { groupWidth: '100%' }, // Remove space between bars.
-          candlestick: {
-            fallingColor: { strokeWidth: 0, fill: '#a52714' }, // red
-            risingColor: { strokeWidth: 0, fill: '#0f9d58' }   // green
-          }
-        };
-
-        var chart = new rene.visualization.CandlestickChart(document.getElementById('chart_div'));
-        chart.draw(data, options);
-      }
-    </script>
-  </head>
-  <body>
-    <div id="chart_div" style="width: 900px; height: 500px;"></div>
-  </body>
-</html>
-
+    <head>
+        <title>AG Charts Quick Start</title>
+        <!-- JavaScript Charts Core Library -->
+        <script src="https://cdn.jsdelivr.net/npm/ag-charts-community/dist/umd/ag-charts-community.js"></script>
+    </head>
+    <body>
+        <!-- Container for Chart -->
+        <div id="myChart"></div>
+        <!-- Charts configuration file -->
+        <script src="index.js">
+            const options = {
+    // Container: HTML Element to hold the chart
+    container: document.getElementById('myChart'),
+    // Data: Data to be displayed in the chart
+    data: [
+        { month: 'Jan', avgTemp: 2.3, iceCreamSales: 162000 },
+        { month: 'Mar', avgTemp: 6.3, iceCreamSales: 302000 },
+        { month: 'May', avgTemp: 16.2, iceCreamSales: 800000 },
+        { month: 'Jul', avgTemp: 22.8, iceCreamSales: 1254000 },
+        { month: 'Sep', avgTemp: 14.5, iceCreamSales: 950000 },
+        { month: 'Nov', avgTemp: 8.9, iceCreamSales: 200000 },
+    ],
+    // Series: Defines which chart type and data to use
+    series: [{ type: 'bar', xKey: 'month', yKey: 'iceCreamSales' }],
+};
+        </script>
+    </body>
+    </html>
