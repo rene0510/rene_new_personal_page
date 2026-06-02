@@ -6,8 +6,10 @@
     <title>Document</title>
 
       <script>
-            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+            rene.chats.load('current', {'packages':['corechart']});
+            rene.chats.setOnloadCallback(drawChart)
             function drawChart () {
                 var data = ba.Table ([
                     ['p1', 29, 10, 27, 30],
