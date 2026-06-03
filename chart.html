@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+   
+</head>
+<body>
+   <script
+   src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0">
+   </script>
+   <canvas>
+    id="myChart" style="width:100%; max-width:700px"
+   </canvas>
+   const myChart = new Chart("myChart", {
+    type: "line", 
+    data: {},
+    options: {}
+   });
+   const xValues = ["Italy", "France", "Spain", "USA", "Argentina"];
+const yValues = [55, 49, 44, 24, 15];
+const barColors = ["red", "green","blue","orange","brown"];
+
+new Chart("myChart", {
+  type: "bar",
+  data: {
+    labels: xValues,
+    datasets: [{
+      backgroundColor: barColors,
+      data: yValues
+    }]
+  },
+  options: {...}
+});
+</body>
+</html>
