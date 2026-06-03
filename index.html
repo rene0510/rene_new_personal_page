@@ -6,6 +6,7 @@
     <title>Document</title>
     <link rel="icon" type="image/x-icon" href="rene_photo/megumi.jpg" >
     <a href=""></a>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0"></script>
 </head>
 <style>
     body{
@@ -254,44 +255,48 @@
          <source src="rene_photo/blue.mp4" type="video/mp4"> <br>
      </video>
     </div>
+    <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
 
-    <script> 
-      const config = { 
-        type: 'bar',
-        data,
-        options: {
-            indexAxis: 'y'
-        }
-      };
-      const labels = Utils.months({count: 7}); 
-      const data = {
-        labels: labels,
-        datasates: [{
-            axis: 'y',
-            label: 'My First Dataset',
-            fill: false, 
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(255, 10, 5, 1)',
-                'rgba(255, 205, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(201, 203, 207, 0.2)'
-            ],
-            borderColor: [
-                'rgb(255, 99, 132)',
-                'rgb(255, 159, 64)',
-                'rgb(255, 205, 86)',
-                'rgb(75, 192, 192)',
-                'rgb(54, 162, 235)',
-                'rgb(153, 102, 255)',
-                'rgb(201, 203, 207)'
-            ],
-            borderWidth: 1
-        }]
-      };
-    </script>
+<script>
+const xyValues = [
+  {x:50, y:7},
+  {x:60, y:8},
+  {x:70, y:8},
+  {x:80, y:9},
+  {x:90, y:9},
+  {x:100, y:9},
+  {x:110, y:10},
+  {x:120, y:11},
+  {x:130, y:14},
+  {x:140, y:14},
+  {x:150, y:15}
+];
+
+const ctx = document.getElementById('myChart');
+
+new Chart(ctx, {
+  type: "scatter",
+  data: {
+    datasets: [{
+      pointRadius: 4,
+      pointBackgroundColor: "rgb(251,116,168)",
+      data: xyValues
+    }]
+  },
+  options: {
+    plugins: {
+      legend: {display:false},
+      title: {
+        display: true,
+        text: "height in these 17years",
+        font: {size:16}
+      }
+    }
+  }
+});
+</script>
+
+   
    
 
 </body>
