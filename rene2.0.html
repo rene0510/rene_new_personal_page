@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="icon" type="image/x-icon" href="rene_photo/megumi.jpg" >
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
       google.charts.load("current", {packages:["corechart"]});
       google.charts.setOnLoadCallback(drawChart);
@@ -21,10 +22,10 @@
 
         var options = {
           title: 'My Daily Activities',
-          is3D: true,
+          pieHole: 0.4,
         };
 
-        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
         chart.draw(data, options);
       }
     </script>
@@ -119,7 +120,8 @@
         I usually watch the video below when i get bored.</p>
         </div>
 
-    <div id="peichart_3d" style="width: 800px; height: 400px;"></div>
+     <div id="donutchart" style="width: 900px; height: 500px;"></div>
+    </div>
          
     
 </body>
