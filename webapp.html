@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Physics, Crouch & Jump</title>
+    <title>3D WebGL FPS - Target HP & Health Bars</title>
     <style>
         body {
             margin: 0;
@@ -208,16 +208,16 @@
         <h2>INVENTORY BAG</h2>
         <p>Select a weapon to equip:</p>
         <div class="weapon-slot active" onclick="selectWeapon('pistol')">
-            <strong>Laser Pistol</strong><br/><small>Semi-Auto • High Precision</small>
+            <strong>Laser Pistol</strong><br/><small>Semi-Auto • 25 DMG</small>
         </div>
         <div class="weapon-slot" onclick="selectWeapon('autoRifle')">
-            <strong>Automatic Rifle</strong><br/><small>Full-Auto • Continuous Spray</small>
+            <strong>Automatic Rifle</strong><br/><small>Full-Auto • 15 DMG</small>
         </div>
         <div class="weapon-slot" onclick="selectWeapon('sniper')">
-            <strong>Bolt Sniper</strong><br/><small>High Power • Extreme Scope Zoom</small>
+            <strong>Bolt Sniper</strong><br/><small>High Power • 100 DMG (Instant Kill)</small>
         </div>
         <div class="weapon-slot" onclick="selectWeapon('shotgun')">
-            <strong>Scatter Shotgun</strong><br/><small>Wide Spread • Low Range Scope</small>
+            <strong>Scatter Shotgun</strong><br/><small>Wide Spread • 12 DMG x 6 Pellets</small>
         </div>
         <div class="hint">Press 'B' again to close bag and resume</div>
     </div>
@@ -240,7 +240,7 @@
         let scene, camera, renderer;
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let isKneeling = false;
-        let canJump = false; // Tracks ground-contact to prevent infinite mid-air leaps
+        let canJump = false; 
         
         let prevTime = performance.now();
         const velocity = new THREE.Vector3();
@@ -264,13 +264,14 @@
         const DEFAULT_FOV = 75;
         const STAND_HEIGHT = 2;
         const KNEE_HEIGHT = 1;
-        let currentBaseHeight = STAND_HEIGHT; // Reference point for tracking gravity thresholds
+        let currentBaseHeight = STAND_HEIGHT; 
 
+        // Added dynamic weapon damage stats
         const WEAPONS = {
-            pistol: { name: "Laser Pistol", fireRate: 300, isAuto: false, spread: 0.005, scopeFov: 55, color: 0x333333, length: 0.4, thickness: 0.08 },
-            autoRifle: { name: "Automatic Rifle", fireRate: 110, isAuto: true, spread: 0.04, scopeFov: 45, color: 0x2b3d26, length: 0.7, thickness: 0.12 },
-            sniper: { name: "Bolt Sniper", fireRate: 1200, isAuto: false, spread: 0.001, scopeFov: 15, color: 0x111111, length: 1.1, thickness: 0.09 },
-            shotgun: { name: "Scatter Shotgun", fireRate: 800, isAuto: false, spread: 0.14, scopeFov: 65, color: 0x554433, length: 0.6, thickness: 0.18 }
+            pistol: { name: "Laser Pistol", fireRate: 300, damage: 25, isAuto: false, spread: 0.005, scopeFov: 55, color: 0x333333, length: 0.4, thickness: 0.08 },
+            autoRifle: { name: "Automatic Rifle", fireRate: 110, damage: 15, isAuto: true, spread: 0.04, scopeFov: 45, color: 0x2b3d26, length: 0.7, thickness: 0.12 },
+            sniper: { name: "Bolt Sniper", fireRate: 1200, damage: 100, isAuto: false, spread: 0.001, scopeFov: 15, color: 0x111111, length: 1.1, thickness: 0.09 },
+            shotgun: { name: "Scatter Shotgun", fireRate: 800, damage: 12, isAuto: false, spread: 0.14, scopeFov: 65, color: 0x554433, length: 0.6, thickness: 0.18 }
         };
         let currentWeapon = 'pistol';
 
@@ -337,7 +338,6 @@
                 }
             });
 
-            // Prevent context menus from appearing when user attempts to Right-Click Scope
             document.addEventListener('contextmenu', event => event.preventDefault());
 
             // Mouse Interactions
@@ -373,18 +373,16 @@
             const onKeyDown = (event) => {
                 if (event.code === 'KeyB') { toggleBag(); return; }
                 
-                // CTRL KEY TO KNEE DOWN / CROUCH
                 if (event.code === 'ControlLeft' || event.code === 'ControlRight') {
                     event.preventDefault();
                     isKneeling = true;
                     return;
                 }
 
-                // SPACEBAR KEY TO JUMP
                 if (event.code === 'Space') {
                     event.preventDefault();
                     if (canJump && !isKneeling) {
-                        velocity.y = 12.0; // Upward impulse speed force
+                        velocity.y = 12.0; 
                         canJump = false;
                     }
                     return;
@@ -444,7 +442,6 @@
             resetGunInertialPosition();
         }
 
-        // --- Positioning Helpers ---
         function resetGunInertialPosition() {
             gunContainer.position.set(0.2, -0.25, -0.5);
         }
@@ -530,43 +527,71 @@
                     const spreadY = (Math.random() - 0.5) * config.spread * spreadModifier;
                     
                     raycaster.setFromCamera(new THREE.Vector2(spreadX, spreadY), camera);
-                    processRaycastHit(raycaster, 30);
+                    processRaycastHit(raycaster, 30, config.damage);
                 }
             } else {
                 let spreadModifier = isScoped ? 0.1 : 1.0;
                 if (isKneeling) spreadModifier *= 0.7; 
-                if (!canJump) spreadModifier *= 2.5; // Hipfire accuracy penalty applies when flying mid-air
+                if (!canJump) spreadModifier *= 2.5; 
 
                 const spreadX = (Math.random() - 0.5) * config.spread * spreadModifier;
                 const spreadY = (Math.random() - 0.5) * config.spread * spreadModifier;
 
                 raycaster.setFromCamera(new THREE.Vector2(spreadX, spreadY), camera);
-                processRaycastHit(raycaster, 150);
+                processRaycastHit(raycaster, 150, config.damage);
             }
         }
 
-        function processRaycastHit(raycaster, maxDistance) {
-            const intersects = raycaster.intersectObjects(targets);
+        function processRaycastHit(raycaster, maxDistance, damage) {
+            // Filter raycast check down directly to target shapes inside the composite groups
+            const clickableObjects = targets.map(t => t.userData.meshLink);
+            const intersects = raycaster.intersectObjects(clickableObjects);
 
             if (intersects.length > 0 && intersects[0].distance <= maxDistance) {
-                const hitTarget = intersects[0].object;
-                if (hitTarget.userData.dead) return;
-                hitTarget.userData.dead = true;
+                const hitMesh = intersects[0].object;
+                const parentGroup = hitMesh.parent; 
 
-                hitTarget.material.color.setHex(0xffffff);
-                hitTarget.material.emissive.setHex(0xffffff);
-                
+                if (parentGroup.userData.dead) return;
+
+                // Subtract Health Points (HP)
+                parentGroup.userData.health -= damage;
+                if (parentGroup.userData.health < 0) parentGroup.userData.health = 0;
+
+                // Calculate updated size for the green health foreground bar
+                const healthPercentage = parentGroup.userData.health / 100;
+                parentGroup.userData.healthBarForeground.scale.x = Math.max(0.0001, healthPercentage);
+                // Offset the bar alignment to keep it anchored left
+                parentGroup.userData.healthBarForeground.position.x = - (1 - healthPercentage) * (parentGroup.userData.barWidth / 2);
+
+                // Hit indicator flash effect
+                hitMesh.material.color.setHex(0xff3333);
                 setTimeout(() => {
-                    scene.remove(hitTarget);
-                    targets = targets.filter(t => t !== hitTarget);
-                    score += 10;
-                    scoreElement.innerText = score;
-                    spawnTarget();
-                }, 40);
+                    if (!parentGroup.userData.dead) {
+                        hitMesh.material.color.setHex(parentGroup.userData.originalColor);
+                    }
+                }, 100);
+
+                // Check death conditions (0 HP)
+                if (parentGroup.userData.health <= 0) {
+                    parentGroup.userData.dead = true;
+                    hitMesh.material.color.setHex(0xffffff);
+                    hitMesh.material.emissive.setHex(0xffffff);
+                    
+                    setTimeout(() => {
+                        scene.remove(parentGroup);
+                        targets = targets.filter(t => t !== parentGroup);
+                        score += 10;
+                        scoreElement.innerText = score;
+                        spawnTarget();
+                    }, 60);
+                }
             }
         }
 
         function spawnTarget() {
+            // Create a structural anchor group to link both the geometric target and its health bar UI together
+            const targetGroup = new THREE.Group();
+
             let geometry;
             const size = Math.random() * 0.4 + 0.4;
             const shapeType = Math.floor(Math.random() * 4);
@@ -581,21 +606,53 @@
             const colors = [0xff3333, 0x33ff33, 0x3333ff, 0xffaa00, 0x00ffff, 0xff00ff];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
-            const material = new THREE.MeshStandardMaterial({ color: randomColor, emissive: randomColor, emissiveIntensity: 0.2 });
-            const target = new THREE.Mesh(geometry, material);
+            const material = new THREE.MeshStandardMaterial({ color: randomColor, emissive: randomColor, emissiveIntensity: 0.1 });
+            const targetMesh = new THREE.Mesh(geometry, material);
+            targetGroup.add(targetMesh);
 
-            target.userData = {
+            // --- Construct Floating 3D Health Bar Group Infrastructure ---
+            const barWidth = size * 1.5;
+            const barHeight = 0.12;
+            
+            const healthBarGroup = new THREE.Group();
+            healthBarGroup.position.y = size + 0.4; // Positions health bar directly above target mesh
+
+            // 1. Dark background bar channel
+            const bgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
+            const bgMat = new THREE.MeshBasicMaterial({ color: 0x440000, side: THREE.DoubleSide });
+            const barBg = new THREE.Mesh(bgGeo, bgMat);
+            healthBarGroup.add(barBg);
+
+            // 2. Bright active green foreground health tracker bar
+            const fgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
+            const fgMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+            const barFg = new THREE.Mesh(fgGeo, fgMat);
+            barFg.position.z = 0.01; // Tiny depth layer offset to eliminate overlapping artifacts
+            healthBarGroup.add(barFg);
+
+            targetGroup.add(healthBarGroup);
+
+            // Setup configuration properties
+            targetGroup.userData = {
+                health: 100, // Maximum blood is 100HP
+                dead: false,
+                meshLink: targetMesh,
+                originalColor: randomColor,
+                healthBarContainer: healthBarGroup,
+                healthBarForeground: barFg,
+                barWidth: barWidth,
                 spinX: (Math.random() - 0.5) * 2,
                 spinY: (Math.random() - 0.5) * 2,
                 floatOffset: Math.random() * 10
             };
 
-            target.position.x = (Math.random() - 0.5) * 80;
-            target.position.y = size + 1 + Math.random() * 8;
-            target.position.z = (Math.random() - 0.5) * 80;
+            // Set positions
+            targetGroup.position.x = (Math.random() - 0.5) * 80;
+            targetGroup.position.y = size + 1 + Math.random() * 8;
+            targetGroup.position.z = (Math.random() - 0.5) * 80;
 
-            scene.add(target);
-            targets.push(target);
+            scene.add(targetGroup);
+            targets.push(targetGroup);
         }
 
         function onWindowResize() {
@@ -617,16 +674,12 @@
                     shoot();
                 }
 
-                // Smoothly determine target height base if crouching vs standing
                 const targetBaseHeight = isKneeling ? KNEE_HEIGHT : STAND_HEIGHT;
                 currentBaseHeight += (targetBaseHeight - currentBaseHeight) * 12.0 * delta;
 
-                // --- 3D Movement Friction & Input Vectors ---
                 velocity.x -= velocity.x * 10.0 * delta;
                 velocity.z -= velocity.z * 10.0 * delta;
-                
-                // SIMULATE ENGINE GRAVITY DOWNWARD ACCELERATION
-                velocity.y -= 9.8 * 3.5 * delta; // Mass weight gravity factor
+                velocity.y -= 9.8 * 3.5 * delta; 
 
                 direction.z = Number(moveForward) - Number(moveBackward);
                 direction.x = Number(moveRight) - Number(moveLeft);
@@ -640,7 +693,6 @@
                 const camRight = new THREE.Vector3();
                 camRight.crossVectors(camYaw, camera.up).negate();
 
-                // Airstrafe penalties (Slightly less control acceleration while flying in the air)
                 let speedModifier = isScoped ? 0.4 : 1.0;
                 if (isKneeling) speedModifier *= 0.5;
                 if (!canJump) speedModifier *= 0.65; 
@@ -648,25 +700,30 @@
                 if (moveForward || moveBackward) velocity.addScaledVector(camYaw, direction.z * 40.0 * delta * speedModifier);
                 if (moveLeft || moveRight) velocity.addScaledVector(camRight, direction.x * 40.0 * delta * speedModifier);
 
-                // --- Apply Axis Velocities to Camera Model Position ---
                 camera.position.x += velocity.x * delta;
                 camera.position.z += velocity.z * delta;
-                camera.position.y += velocity.y * delta; // Apply gravity / jump physics vector
+                camera.position.y += velocity.y * delta; 
 
-                // BOUNDARY CHECK: Prevent falling below floor level mesh
                 if (camera.position.y < currentBaseHeight) {
                     velocity.y = 0;
                     camera.position.y = currentBaseHeight;
-                    canJump = true; // Landing resets ground status allowing another jump
+                    canJump = true; 
                 }
 
                 camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
                 camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
 
-                targets.forEach((target) => {
-                    target.rotation.x += target.userData.spinX * delta;
-                    target.rotation.y += target.userData.spinY * delta;
-                    target.position.y += Math.sin((time * 0.002) + target.userData.floatOffset) * 0.005;
+                // Update targets
+                targets.forEach((targetGroup) => {
+                    // Spin only the target's geometric mesh element
+                    targetGroup.userData.meshLink.rotation.x += targetGroup.userData.spinX * delta;
+                    targetGroup.userData.meshLink.rotation.y += targetGroup.userData.spinY * delta;
+                    
+                    // Float the entire composite structure vertically
+                    targetGroup.position.y += Math.sin((time * 0.002) + targetGroup.userData.floatOffset) * 0.005;
+
+                    // Billboard Health Bar Constraint: Rotates bars to always face the player camera directly
+                    targetGroup.userData.healthBarContainer.quaternion.copy(camera.quaternion);
                 });
             }
 
