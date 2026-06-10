@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL First-Person Shooter</title>
+    <title>3D WebGL FPS - Scopes & Automatic Weapons</title>
     <style>
         body {
             margin: 0;
@@ -32,6 +32,8 @@
             font-size: 16px;
             color: #aaa;
         }
+        
+        /* --- Crosshair & Tactical Scope --- */
         #crosshair {
             position: absolute;
             top: 50%;
@@ -41,6 +43,7 @@
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 5;
+            transition: opacity 0.1s;
         }
         #crosshair::before, #crosshair::after {
             content: '';
@@ -50,6 +53,26 @@
         #crosshair::before { top: 4px; left: -5px; width: 20px; height: 2px; }
         #crosshair::after { top: -5px; left: 4px; width: 2px; height: 20px; }
         
+        #scope-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 6;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+        .scope-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            border-radius: 50%;
+        }
+        #scope-outer { width: 400px; height: 400px; }
+        #scope-inner { width: 200px; height: 200px; border-style: dashed; }
+        #scope-reticle-h { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(0,255,255,0.5); }
+        #scope-reticle-v { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: rgba(0,255,255,0.5); }
+
         #hud {
             position: absolute;
             bottom: 20px;
@@ -61,6 +84,57 @@
             pointer-events: none;
             z-index: 5;
         }
+        #weapon-display {
+            font-size: 16px;
+            color: #00ffff;
+            margin-top: 5px;
+        }
+
+        /* --- Inventory Bag UI --- */
+        #inventory-bag {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            background: rgba(20, 20, 30, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+        #inventory-bag h2 {
+            margin-top: 0;
+            color: #00ffff;
+            letter-spacing: 2px;
+        }
+        .weapon-slot {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #444;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .weapon-slot:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        .weapon-slot.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+            box-shadow: inset 0 0 10px rgba(0,255,255,0.5);
+        }
+        .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 15px;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -71,13 +145,43 @@
             <strong>CLICK TO PLAY</strong><br/><br/>
             W, A, S, D = Move<br/>
             MOUSE = Look Around<br/>
-            LEFT CLICK = Shoot<br/><br/>
+            LEFT CLICK = Shoot (Hold for Auto)<br/>
+            <strong>RIGHT CLICK = AIM DOWN SCOPE</strong><br/>
+            <strong>PRESS 'B' = OPEN WEAPON BAG</strong><br/><br/>
             <span>(Press ESC to exit)</span>
         </div>
     </div>
 
+    <div id="inventory-bag">
+        <h2>INVENTORY BAG</h2>
+        <p>Select a weapon to equip:</p>
+        <div class="weapon-slot active" onclick="selectWeapon('pistol')">
+            <strong>Laser Pistol</strong><br/><small>Semi-Auto • High Precision</small>
+        </div>
+        <div class="weapon-slot" onclick="selectWeapon('autoRifle')">
+            <strong>Automatic Rifle</strong><br/><small>Full-Auto • Continuous Spray</small>
+        </div>
+        <div class="weapon-slot" onclick="selectWeapon('sniper')">
+            <strong>Bolt Sniper</strong><br/><small>High Power • Extreme Scope Zoom</small>
+        </div>
+        <div class="weapon-slot" onclick="selectWeapon('shotgun')">
+            <strong>Scatter Shotgun</strong><br/><small>Wide Spread • Low Range Scope</small>
+        </div>
+        <div class="hint">Press 'B' again to close bag and resume</div>
+    </div>
+
     <div id="crosshair"></div>
-    <div id="hud">SCORE: <span id="score">0</span></div>
+    <div id="scope-overlay">
+        <div id="scope-reticle-h"></div>
+        <div id="scope-reticle-v"></div>
+        <div class="scope-ring" id="scope-outer"></div>
+        <div class="scope-ring" id="scope-inner"></div>
+    </div>
+    
+    <div id="hud">
+        SCORE: <span id="score">0</span>
+        <div id="weapon-display">WEAPON: Laser Pistol</div>
+    </div>
 
     <script>
         // --- Game Setup ---
@@ -90,25 +194,40 @@
         let targets = [];
         let score = 0;
         const scoreElement = document.getElementById('score');
+        const weaponDisplay = document.getElementById('weapon-display');
+        const bagElement = document.getElementById('inventory-bag');
+        const crosshair = document.getElementById('crosshair');
+        const scopeOverlay = document.getElementById('scope-overlay');
 
-        // Gun Object
-        let gun;
+        // Gun/Trigger System Configuration
+        let gunContainer; 
+        let isBagOpen = false;
+        let isScoped = false;
+        let isLeftMouseDown = false;
+        let lastShotTime = 0;
 
-        // --- Initialize Three.js ---
+        const DEFAULT_FOV = 75;
+
+        const WEAPONS = {
+            pistol: { name: "Laser Pistol", fireRate: 300, isAuto: false, spread: 0.005, scopeFov: 55, color: 0x333333, length: 0.4, thickness: 0.08 },
+            autoRifle: { name: "Automatic Rifle", fireRate: 110, isAuto: true, spread: 0.04, scopeFov: 45, color: 0x2b3d26, length: 0.7, thickness: 0.12 },
+            sniper: { name: "Bolt Sniper", fireRate: 1200, isAuto: false, spread: 0.001, scopeFov: 15, color: 0x111111, length: 1.1, thickness: 0.09 },
+            shotgun: { name: "Scatter Shotgun", fireRate: 800, isAuto: false, spread: 0.14, scopeFov: 65, color: 0x554433, length: 0.6, thickness: 0.18 }
+        };
+        let currentWeapon = 'pistol';
+
+        // --- Initialize ---
         init();
         animate();
 
         function init() {
-            // Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x11111d);
             scene.fog = new THREE.FogExp2(0x11111d, 0.015);
 
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.y = 2; // Height of player
+            camera = new THREE.PerspectiveCamera(DEFAULT_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.y = 2; 
 
-            // Lights
             const ambientLight = new THREE.AmbientLight(0x666666);
             scene.add(ambientLight);
 
@@ -116,65 +235,82 @@
             dirLight.position.set(20, 40, 20);
             scene.add(dirLight);
 
-            // Floor (Grid Texture Grid effect)
+            // Floor
             const floorGeo = new THREE.PlaneGeometry(200, 200, 50, 50);
             floorGeo.rotateX(-Math.PI / 2);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x222222, wireframe: true });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             scene.add(floor);
 
-            // Simple Gun Mesh attached to camera
-            const gunGeo = new THREE.BoxGeometry(0.1, 0.1, 0.5);
-            const gunMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2 });
-            gun = new THREE.Mesh(gunGeo, gunMat);
-            // Position relative to camera eye-line
-            gun.position.set(0.2, -0.25, -0.5); 
-            camera.add(gun);
-            scene.add(camera); // Must add camera to scene to see attached gun
+            // Gun Group Assembly
+            gunContainer = new THREE.Group();
+            resetGunInertialPosition();
+            camera.add(gunContainer);
+            scene.add(camera); 
 
-            // Spawn Initial Targets
-            for (let i = 0; i < 20; i++) {
-                spawnTarget();
-            }
+            buildGunMesh();
 
-            // Renderer
+            // Spawn Targets
+            for (let i = 0; i < 25; i++) spawnTarget();
+
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // --- Controls & Pointer Lock ---
+            // Blocker & Pointerlock context handling
             const blocker = document.getElementById('blocker');
-            
             blocker.addEventListener('click', () => {
-                document.body.requestPointerLock();
+                if (!isBagOpen) document.body.requestPointerLock();
             });
 
             document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement === document.body) {
-                    blocker.style.display = 'none';
+                if (document.pointerLockElement !== document.body) {
+                    if (!isBagOpen) blocker.style.display = 'flex';
+                    exitScope(); 
                 } else {
-                    blocker.style.display = 'flex';
+                    blocker.style.display = 'none';
                 }
             });
 
-            // Mouse Look Controls
+            // Prevent context menus from appearing when user attempts to Right-Click Scope
+            document.addEventListener('contextmenu', event => event.preventDefault());
+
+            // Mouse Interactions
             document.addEventListener('mousemove', (event) => {
-                if (document.pointerLockElement !== document.body) return;
+                if (document.pointerLockElement !== document.body || isBagOpen) return;
 
-                // Rotate camera/player based on mouse movement
-                camera.rotation.y -= event.movementX * 0.002;
-                camera.rotation.x -= event.movementY * 0.002;
+                // Turn slower when zoomed through a scope to make fine adjustments easy
+                const sensitivityModifier = isScoped ? (WEAPONS[currentWeapon].scopeFov / DEFAULT_FOV) : 1.0;
 
-                // Clamp up/down rotation to prevent flipping upside down
+                camera.rotation.y -= event.movementX * 0.002 * sensitivityModifier;
+                camera.rotation.x -= event.movementY * 0.002 * sensitivityModifier;
                 camera.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camera.rotation.x));
             });
 
-            // Ensure order of rotations is correct for FPS
             camera.rotation.order = "YXZ";
 
-            // Keyboard Controls
+            // Click handling triggers
+            document.addEventListener('mousedown', (event) => {
+                if (document.pointerLockElement !== document.body || isBagOpen) return;
+                
+                if (event.button === 0) { // Left Click
+                    isLeftMouseDown = true;
+                    shoot(); 
+                } else if (event.button === 2) { // Right Click
+                    toggleScope();
+                }
+            });
+
+            document.addEventListener('mouseup', (event) => {
+                if (event.button === 0) isLeftMouseDown = false;
+            });
+
+            // Keyboard Hooks
             const onKeyDown = (event) => {
+                if (event.code === 'KeyB') { toggleBag(); return; }
+                if (isBagOpen) return;
+
                 switch (event.code) {
                     case 'KeyW': moveForward = true; break;
                     case 'KeyA': moveLeft = true; break;
@@ -194,127 +330,109 @@
 
             document.addEventListener('keydown', onKeyDown);
             document.addEventListener('keyup', onKeyUp);
-
-            // Shooting Event
-            document.addEventListener('mousedown', (event) => {
-                if (document.pointerLockElement !== document.body) return;
-                if (event.button === 0) shoot(); // Left click
-            });
-
             window.addEventListener('resize', onWindowResize);
         }
 
-        // --- Game Mechanics ---
+        // --- Scope Dynamics ---
+        function toggleScope() {
+            isScoped = !isScoped;
+            const config = WEAPONS[currentWeapon];
 
-        function spawnTarget() {
-            const size = Math.random() * 0.5 + 0.5;
-            const geometry = new THREE.SphereGeometry(size, 16, 16);
-            
-            // Neon red/orange target colors
-            const material = new THREE.MeshStandardMaterial({ 
-                color: Math.random() > 0.5 ? 0xff3333 : 0xffaa00,
-                emissive: 0x220000 
-            });
-            
-            const target = new THREE.Mesh(geometry, material);
-
-            // Random positions around the map
-            target.position.x = (Math.random() - 0.5) * 60;
-            target.position.y = size + Math.random() * 5; // suspended at varying heights
-            target.position.z = (Math.random() - 0.5) * 60;
-
-            scene.add(target);
-            targets.push(target);
-        }
-
-        function shoot() {
-            // Gun recoil animation bounce
-            gun.position.z = -0.4;
-            setTimeout(() => gun.position.z = -0.5, 50);
-
-            // Raycasting to detect hits exactly where crosshair is pointing
-            const raycaster = new THREE.Raycaster();
-            // Center of the screen is (0,0) in normalized device coordinates
-            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-
-            const intersects = raycaster.intersectObjects(targets);
-
-            if (intersects.length > 0) {
-                const hitTarget = intersects[0].object;
-
-                // Visual hit effect (Flash target white briefly before destruction)
-                hitTarget.material.color.setHex(0xffffff);
+            if (isScoped) {
+                camera.fov = config.scopeFov;
+                camera.updateProjectionMatrix();
                 
-                setTimeout(() => {
-                    scene.remove(hitTarget);
-                    targets = targets.filter(t => t !== hitTarget);
-                    
-                    // Increment Score
-                    score += 10;
-                    scoreElement.innerText = score;
+                // UI Adaptations
+                crosshair.style.opacity = '0';
+                scopeOverlay.style.display = 'block';
 
-                    // Respawn a new target to keep the game going
-                    spawnTarget();
-                }, 40);
+                // Shift weapon mesh down and center out of camera frustum view
+                gunContainer.position.set(0, -0.6, -0.3);
+            } else {
+                exitScope();
             }
         }
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
+        function exitScope() {
+            isScoped = false;
+            camera.fov = DEFAULT_FOV;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            crosshair.style.opacity = '1';
+            scopeOverlay.style.display = 'none';
+            resetGunInertialPosition();
         }
 
-        // --- Main Game Loop ---
-        function animate() {
-            requestAnimationFrame(animate);
+        function resetGunInertialPosition() {
+            gunContainer.position.set(0.2, -0.25, -0.5);
+        }
 
-            const time = performance.now();
-
-            if (document.pointerLockElement === document.body) {
-                const delta = (time - prevTime) / 1000;
-
-                // Apply friction / deceleration
-                velocity.x -= velocity.x * 10.0 * delta;
-                velocity.z -= velocity.z * 10.0 * delta;
-
-                // Determine direction vector
-                direction.z = Number(moveForward) - Number(moveBackward);
-                direction.x = Number(moveRight) - Number(moveLeft);
-                direction.normalize(); 
-
-                // Move Relative to Camera Direction
-                const camYaw = new THREE.Vector3();
-                camera.getWorldDirection(camYaw);
-                camYaw.y = 0; // Lock movement to horizontal ground plane
-                camYaw.normalize();
-
-                const camRight = new THREE.Vector3();
-                camRight.crossVectors(camYaw, camera.up).negate();
-
-                if (moveForward || moveBackward) {
-                    velocity.addScaledVector(camYaw, direction.z * 40.0 * delta);
-                }
-                if (moveLeft || moveRight) {
-                    velocity.addScaledVector(camRight, direction.x * 40.0 * delta);
-                }
-
-                // Translate position
-                camera.position.addScaledVector(velocity, delta);
-                
-                // Restrict boundaries so you don't wander off forever
-                camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
-                camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
-
-                // Float targets up and down gently for dynamic gameplay
-                targets.forEach((target, index) => {
-                    target.position.y += Math.sin(time * 0.002 + index) * 0.005;
-                });
+        // --- Inventory Adjustments ---
+        function toggleBag() {
+            isBagOpen = !isBagOpen;
+            if (isBagOpen) {
+                isLeftMouseDown = false;
+                document.exitPointerLock();
+                bagElement.style.display = 'block';
+            } else {
+                bagElement.style.display = 'none';
+                document.body.requestPointerLock();
             }
-
-            prevTime = time;
-            renderer.render(scene, camera);
         }
-    </script>
-</body>
-</html>
+
+        function selectWeapon(weaponType) {
+            currentWeapon = weaponType;
+            exitScope();
+
+            const slots = document.querySelectorAll('.weapon-slot');
+            slots.forEach(slot => slot.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            weaponDisplay.innerText = "WEAPON: " + WEAPONS[weaponType].name;
+            buildGunMesh();
+        }
+
+        function buildGunMesh() {
+            while(gunContainer.children.length > 0){ gunContainer.remove(gunContainer.children[0]); }
+
+            const config = WEAPONS[currentWeapon];
+
+            // Base Weapon Barrel
+            const gunGeo = new THREE.BoxGeometry(config.thickness, config.thickness, config.length);
+            const gunMat = new THREE.MeshStandardMaterial({ color: config.color, metalness: 0.7, roughness: 0.3 });
+            const barrel = new THREE.Mesh(gunGeo, gunMat);
+            barrel.position.z = -config.length / 2;
+            gunContainer.add(barrel);
+
+            // MANDATORY SCOPE ATTACHMENT MODEL PARTS (Rendered physically onto every weapon variant)
+            const scopeHousingGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.2);
+            scopeHousingGeo.rotateX(Math.PI / 2);
+            const scopeHousingMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.9 });
+            const physicalScope = new THREE.Mesh(scopeHousingGeo, scopeHousingMat);
+            
+            // Mount the structural scope box on top center of the barrel frames
+            physicalScope.position.set(0, config.thickness / 1.6, -config.length / 2);
+            gunContainer.add(physicalScope);
+
+            // Scope Mount rings
+            const mountGeo = new THREE.BoxGeometry(0.01, 0.03, 0.02);
+            const mount1 = new THREE.Mesh(mountGeo, scopeHousingMat);
+            mount1.position.set(0, config.thickness / 2, -config.length / 2.5);
+            gunContainer.add(mount1);
+
+            // Variant adjustments
+            if (currentWeapon === 'sniper') {
+                // Long structural scope shading hood
+                const lensHoodGeo = new THREE.CylinderGeometry(0.035, 0.025, 0.1);
+                lensHoodGeo.rotateX(Math.PI / 2);
+                const hood = new THREE.Mesh(lensHoodGeo, scopeHousingMat);
+                hood.position.set(0, config.thickness / 1.6, (-config.length / 2) - 0.1);
+                gunContainer.add(hood);
+            }
+        }
+
+        // --- Shooter Mechanics ---
+        function shoot() {
+            const now = performance.now();
+            const config = WEAPONS[currentWeapon];
+
+            if (now - lastShotTime < config.fireRate) return;
