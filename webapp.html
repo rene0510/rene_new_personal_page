@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Variable Tactical Scopes</title>
+    <title>3D WebGL FPS - Roblox Style Hotbar</title>
     <style>
         body {
             margin: 0;
@@ -123,7 +123,6 @@
         #scope-reticle-h { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: linear-gradient(to right, transparent, rgba(255,95,158,0.7) 30%, rgba(255,95,158,0.7) 70%, transparent); }
         #scope-reticle-v { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: linear-gradient(to bottom, transparent, rgba(255,95,158,0.7) 30%, rgba(255,95,158,0.7) 70%, transparent); }
 
-        /* Tactical Data Readout inside the Scope */
         #scope-hud-readout {
             position: absolute;
             top: calc(50% + 70px);
@@ -140,67 +139,93 @@
             border: 1px solid rgba(255, 95, 158, 0.3);
         }
 
+        /* --- Score HUD --- */
         #hud {
             position: absolute;
-            bottom: 20px;
+            top: 20px;
             left: 20px;
             color: #fff;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px #000;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             pointer-events: none;
             z-index: 5;
         }
-        #weapon-display {
-            font-size: 16px;
-            color: #ff5f9e;
-            margin-top: 5px;
-        }
 
-        /* --- Inventory Bag UI --- */
-        #inventory-bag {
-            display: none;
+        /* --- Roblox Style Bottom Hotbar UI --- */
+        #roblox-hotbar {
             position: absolute;
-            top: 50%;
+            bottom: 15px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 420px;
-            background: rgba(20, 20, 30, 0.95);
-            border: 2px solid #ff5f9e;
-            border-radius: 10px;
-            padding: 20px;
-            color: white;
-            z-index: 20;
-            box-shadow: 0 0 20px rgba(255, 95, 158, 0.3);
-            text-align: center;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px;
+            border-radius: 6px;
+            pointer-events: auto;
+            z-index: 5;
         }
-        #inventory-bag h2 {
-            margin-top: 0;
-            color: #ff5f9e;
-            letter-spacing: 2px;
-        }
-        .weapon-slot {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #444;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 5px;
+        .hotbar-slot {
+            width: 90px;
+            height: 75px;
+            background: rgba(30, 30, 40, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #eee;
+            position: relative;
             cursor: pointer;
-            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .weapon-slot:hover {
-            background: rgba(255, 95, 158, 0.2);
-            border-color: #ff5f9e;
+        .hotbar-slot:hover {
+            background: rgba(45, 45, 60, 0.9);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
         }
-        .weapon-slot.active {
-            background: rgba(255, 95, 158, 0.3);
-            border-color: #ff5f9e;
-            box-shadow: inset 0 0 10px rgba(255,95,158,0.5);
+        /* Active Hotbar Selection Style matching Roblox outline */
+        .hotbar-slot.active {
+            background: rgba(255, 95, 158, 0.25);
+            border: 2px solid #ff5f9e;
+            box-shadow: 0 0 12px rgba(255, 95, 158, 0.6);
+            color: #fff;
         }
-        .hint {
+        .slot-number {
+            position: absolute;
+            top: 3px;
+            left: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .slot-name {
             font-size: 12px;
-            color: #888;
-            margin-top: 15px;
+            font-weight: bold;
+            margin-top: 8px;
+            padding: 0 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .slot-desc {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 3px;
+        }
+        .hotbar-slot.active .slot-number {
+            color: #ff5f9e;
+        }
+        .hotbar-slot.active .slot-desc {
+            color: rgba(255, 255, 255, 0.8);
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -216,31 +241,36 @@
                 • <strong>LEFT CLICK</strong> : Fire Weapon (Hold for Auto)<br/>
                 • <strong>RIGHT CLICK</strong> : Cycle Zoom (x2 -> x4 -> x6 -> Off)<br/>
                 • <strong>SPACEBAR</strong> : Jump Up<br/>
-                • <strong>CTRL KEY</strong> : Knee Down (Hold to crouch)<br/>
-                • <strong>B KEY</strong> : Open Weapon Bag
+                • <strong>KEYS 1, 2, 3, 4</strong> : Switch Inventory Items Instantly<br/>
+                • <strong>CTRL KEY</strong> : Knee Down (Hold to crouch)
             </div>
             <br/>
             <button class="start-btn" id="start-button">START GAME</button>
-            <span>Press ESC during gameplay to return to this menu</span>
+            <span>Press ESC during gameplay to release cursor target</span>
         </div>
     </div>
 
-    <div id="inventory-bag">
-        <h2>INVENTORY BAG</h2>
-        <p>Select a weapon to equip:</p>
-        <div class="weapon-slot active" onclick="selectWeapon('pistol')">
-            <strong>Laser Pistol</strong><br/><small>Semi-Auto • 25 DMG</small>
+    <div id="roblox-hotbar">
+        <div class="hotbar-slot active" id="slot-pistol" onclick="selectWeapon('pistol')">
+            <span class="slot-number">1</span>
+            <span class="slot-name">Laser Pistol</span>
+            <span class="slot-desc">25 DMG</span>
         </div>
-        <div class="weapon-slot" onclick="selectWeapon('autoRifle')">
-            <strong>Automatic Rifle</strong><br/><small>Full-Auto • 15 DMG</small>
+        <div class="hotbar-slot" id="slot-autoRifle" onclick="selectWeapon('autoRifle')">
+            <span class="slot-number">2</span>
+            <span class="slot-name">Auto Rifle</span>
+            <span class="slot-desc">15 DMG</span>
         </div>
-        <div class="weapon-slot" onclick="selectWeapon('sniper')">
-            <strong>Bolt Sniper</strong><br/><small>High Power • 50 DMG</small>
+        <div class="hotbar-slot" id="slot-sniper" onclick="selectWeapon('sniper')">
+            <span class="slot-number">3</span>
+            <span class="slot-name">Bolt Sniper</span>
+            <span class="slot-desc">50 DMG</span>
         </div>
-        <div class="weapon-slot" onclick="selectWeapon('shotgun')">
-            <strong>Scatter Shotgun</strong><br/><small>Wide Spread • 12 DMG x 6 Pellets</small>
+        <div class="hotbar-slot" id="slot-shotgun" onclick="selectWeapon('shotgun')">
+            <span class="slot-number">4</span>
+            <span class="slot-name">Shotgun</span>
+            <span class="slot-desc">12 DMG x6</span>
         </div>
-        <div class="hint">Press 'B' again to close bag and resume</div>
     </div>
 
     <div id="crosshair"></div>
@@ -255,7 +285,6 @@
     
     <div id="hud">
         SCORE: <span id="score">0</span>
-        <div id="weapon-display">WEAPON: Laser Pistol</div>
     </div>
 
     <script>
@@ -272,21 +301,18 @@
         let targets = [];
         let score = 0;
         const scoreElement = document.getElementById('score');
-        const weaponDisplay = document.getElementById('weapon-display');
-        const bagElement = document.getElementById('inventory-bag');
         const crosshair = document.getElementById('crosshair');
         const scopeOverlay = document.getElementById('scope-overlay');
         const scopeReadout = document.getElementById('scope-hud-readout');
 
         // Gun/Trigger System Configuration
         let gunContainer; 
-        let isBagOpen = false;
         let isLeftMouseDown = false;
         let lastShotTime = 0;
 
         // Tactical Scope Zoom Level Arrays (0 = no scope, 1 = x2, 2 = x4, 3 = x6)
         let zoomState = 0; 
-        const ZOOM_FOVS = [75, 45, 22.5, 12.5]; // Relative fields-of-view matching base 75 FOV
+        const ZOOM_FOVS = [75, 45, 22.5, 12.5]; 
         const ZOOM_LABELS = ["", "[ 2X ZOOM ]", "[ 4X ZOOM ]", "[ 6X ZOOM ]"];
 
         const DEFAULT_FOV = 75;
@@ -295,12 +321,20 @@
         let currentBaseHeight = STAND_HEIGHT; 
 
         const WEAPONS = {
-            pistol: { name: "Laser Pistol", fireRate: 300, damage: 25, isAuto: false, spread: 0.005, color: 0x333333, length: 0.4, thickness: 0.08 },
-            autoRifle: { name: "Automatic Rifle", fireRate: 110, damage: 15, isAuto: true, spread: 0.04, color: 0x2b3d26, length: 0.7, thickness: 0.12 },
-            sniper: { name: "Bolt Sniper", fireRate: 1200, damage: 50, isAuto: false, spread: 0.001, color: 0x111111, length: 1.1, thickness: 0.09 },
-            shotgun: { name: "Scatter Shotgun", fireRate: 800, damage: 12, isAuto: false, spread: 0.14, color: 0x554433, length: 0.6, thickness: 0.18 }
+            pistol: { name: "Laser Pistol", fireRate: 300, damage: 25, isAuto: false, spread: 0.005, color: 0x333333, length: 0.4, thickness: 0.08, index: 1 },
+            autoRifle: { name: "Automatic Rifle", fireRate: 110, damage: 15, isAuto: true, spread: 0.04, color: 0x2b3d26, length: 0.7, thickness: 0.12, index: 2 },
+            sniper: { name: "Bolt Sniper", fireRate: 1200, damage: 50, isAuto: false, spread: 0.001, color: 0x111111, length: 1.1, thickness: 0.09, index: 3 },
+            shotgun: { name: "Scatter Shotgun", fireRate: 800, damage: 12, isAuto: false, spread: 0.14, color: 0x554433, length: 0.6, thickness: 0.18, index: 4 }
         };
         let currentWeapon = 'pistol';
+
+        // Map array positions for swift hotkey translation lookup execution
+        const WEAPON_KEYS = {
+            'Digit1': 'pistol',
+            'Digit2': 'autoRifle',
+            'Digit3': 'sniper',
+            'Digit4': 'shotgun'
+        };
 
         // --- Initialize ---
         init();
@@ -353,11 +387,9 @@
 
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
-                    if (!isBagOpen) {
-                        blocker.style.display = 'flex';
-                        document.querySelector('#menu-panel h1').innerText = "GAME PAUSED";
-                        document.getElementById('start-button').innerText = "RESUME GAME";
-                    }
+                    blocker.style.display = 'flex';
+                    document.querySelector('#menu-panel h1').innerText = "GAME PAUSED";
+                    document.getElementById('start-button').innerText = "RESUME GAME";
                     exitScope(); 
                 } else {
                     blocker.style.display = 'none';
@@ -367,9 +399,8 @@
             document.addEventListener('contextmenu', event => event.preventDefault());
 
             document.addEventListener('mousemove', (event) => {
-                if (document.pointerLockElement !== document.body || isBagOpen) return;
+                if (document.pointerLockElement !== document.body) return;
 
-                // Adjust look speed inversely based on magnification level
                 const baseSensitivity = 0.002;
                 const sensitivityModifier = (zoomState > 0) ? (ZOOM_FOVS[zoomState] / DEFAULT_FOV) : 0.8;
 
@@ -381,7 +412,7 @@
             camera.rotation.order = "YXZ";
 
             document.addEventListener('mousedown', (event) => {
-                if (document.pointerLockElement !== document.body || isBagOpen) return;
+                if (document.pointerLockElement !== document.body) return;
                 
                 if (event.button === 0) { 
                     isLeftMouseDown = true;
@@ -396,8 +427,12 @@
             });
 
             const onKeyDown = (event) => {
-                if (event.code === 'KeyB') { toggleBag(); return; }
-                
+                // Instantly swap weapon if 1-4 keys are struck (Roblox style)
+                if (WEAPON_KEYS[event.code]) {
+                    selectWeapon(WEAPON_KEYS[event.code]);
+                    return;
+                }
+
                 if (event.code === 'ControlLeft' || event.code === 'ControlRight') {
                     event.preventDefault();
                     isKneeling = true;
@@ -412,8 +447,6 @@
                     }
                     return;
                 }
-                
-                if (isBagOpen) return;
 
                 switch (event.code) {
                     case 'KeyW': moveForward = true; break;
@@ -444,7 +477,6 @@
 
         // --- Multi-Tier Scope Zoom Logic ---
         function cycleScopeZoom() {
-            // Cycle forward through levels: 0 (Off) -> 1 (x2) -> 2 (x4) -> 3 (x6) -> 0 (Off)
             zoomState = (zoomState + 1) % 4;
 
             if (zoomState > 0) {
@@ -454,8 +486,6 @@
                 crosshair.style.opacity = '0';
                 scopeOverlay.style.display = 'block';
                 scopeReadout.innerText = ZOOM_LABELS[zoomState];
-                
-                // Align gun body lower on the screen to prevent obstructing optics visibility
                 gunContainer.position.set(0, -0.6, -0.3);
             } else {
                 exitScope();
@@ -475,30 +505,16 @@
             gunContainer.position.set(0.2, -0.25, -0.5);
         }
 
-        // --- Inventory Adjustments ---
-        function toggleBag() {
-            if (document.pointerLockElement !== document.body && !isBagOpen) return;
-
-            isBagOpen = !isBagOpen;
-            if (isBagOpen) {
-                isLeftMouseDown = false;
-                document.exitPointerLock();
-                bagElement.style.display = 'block';
-            } else {
-                bagElement.style.display = 'none';
-                document.body.requestPointerLock();
-            }
-        }
-
+        // --- Roblox Bar Selection Controller ---
         function selectWeapon(weaponType) {
             currentWeapon = weaponType;
             exitScope();
 
-            const slots = document.querySelectorAll('.weapon-slot');
+            // Clear active class from all slots and update the selection visual frame
+            const slots = document.querySelectorAll('.hotbar-slot');
             slots.forEach(slot => slot.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            weaponDisplay.innerText = "WEAPON: " + WEAPONS[weaponType].name;
+            
+            document.getElementById(`slot-${weaponType}`).classList.add('active');
             buildGunMesh();
         }
 
@@ -700,7 +716,7 @@
 
             const time = performance.now();
 
-            if (document.pointerLockElement === document.body && !isBagOpen) {
+            if (document.pointerLockElement === document.body) {
                 const delta = (time - prevTime) / 1000;
 
                 if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) {
