@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D WebGL First-Person Shooter</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #blocker {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+        #instructions {
+            font-size: 24px;
+        }
+        #instructions span {
+            font-size: 16px;
+            color: #aaa;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 5;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        #crosshair::before { top: 4px; left: -5px; width: 20px; height: 2px; }
+        #crosshair::after { top: -5px; left: 4px; width: 2px; height: 20px; }
+        
+        #hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="blocker">
+        <div id="instructions">
+            <strong>CLICK TO PLAY</strong><br/><br/>
+            W, A, S, D = Move<br/>
+            MOUSE = Look Around<br/>
+            LEFT CLICK = Shoot<br/><br/>
+            <span>(Press ESC to exit)</span>
+        </div>
+    </div>
+
+    <div id="crosshair"></div>
+    <div id="hud">SCORE: <span id="score">0</span></div>
+
+    <script>
+        // --- Game Setup ---
+        let scene, camera, renderer;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let prevTime = performance.now();
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        
+        let targets = [];
+        let score = 0;
+        const scoreElement = document.getElementById('score');
+
+        // Gun Object
+        let gun;
+
+        // --- Initialize Three.js ---
+        init();
+        animate();
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x11111d);
+            scene.fog = new THREE.FogExp2(0x11111d, 0.015);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.y = 2; // Height of player
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0x666666);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            // Floor (Grid Texture Grid effect)
+            const floorGeo = new THREE.PlaneGeometry(200, 200, 50, 50);
+            floorGeo.rotateX(-Math.PI / 2);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x222222, wireframe: true });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            scene.add(floor);
+
+            // Simple Gun Mesh attached to camera
+            const gunGeo = new THREE.BoxGeometry(0.1, 0.1, 0.5);
+            const gunMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2 });
+            gun = new THREE.Mesh(gunGeo, gunMat);
+            // Position relative to camera eye-line
+            gun.position.set(0.2, -0.25, -0.5); 
+            camera.add(gun);
+            scene.add(camera); // Must add camera to scene to see attached gun
+
+            // Spawn Initial Targets
+            for (let i = 0; i < 20; i++) {
+                spawnTarget();
+            }
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // --- Controls & Pointer Lock ---
+            const blocker = document.getElementById('blocker');
+            
+            blocker.addEventListener('click', () => {
+                document.body.requestPointerLock();
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement === document.body) {
+                    blocker.style.display = 'none';
+                } else {
+                    blocker.style.display = 'flex';
+                }
+            });
+
+            // Mouse Look Controls
+            document.addEventListener('mousemove', (event) => {
+                if (document.pointerLockElement !== document.body) return;
+
+                // Rotate camera/player based on mouse movement
+                camera.rotation.y -= event.movementX * 0.002;
+                camera.rotation.x -= event.movementY * 0.002;
+
+                // Clamp up/down rotation to prevent flipping upside down
+                camera.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camera.rotation.x));
+            });
+
+            // Ensure order of rotations is correct for FPS
+            camera.rotation.order = "YXZ";
+
+            // Keyboard Controls
+            const onKeyDown = (event) => {
+                switch (event.code) {
+                    case 'KeyW': moveForward = true; break;
+                    case 'KeyA': moveLeft = true; break;
+                    case 'KeyS': moveBackward = true; break;
+                    case 'KeyD': moveRight = true; break;
+                }
+            };
+
+            const onKeyUp = (event) => {
+                switch (event.code) {
+                    case 'KeyW': moveForward = false; break;
+                    case 'KeyA': moveLeft = false; break;
+                    case 'KeyS': moveBackward = false; break;
+                    case 'KeyD': moveRight = false; break;
+                }
+            };
+
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+
+            // Shooting Event
+            document.addEventListener('mousedown', (event) => {
+                if (document.pointerLockElement !== document.body) return;
+                if (event.button === 0) shoot(); // Left click
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // --- Game Mechanics ---
+
+        function spawnTarget() {
+            const size = Math.random() * 0.5 + 0.5;
+            const geometry = new THREE.SphereGeometry(size, 16, 16);
+            
+            // Neon red/orange target colors
+            const material = new THREE.MeshStandardMaterial({ 
+                color: Math.random() > 0.5 ? 0xff3333 : 0xffaa00,
+                emissive: 0x220000 
+            });
+            
+            const target = new THREE.Mesh(geometry, material);
+
+            // Random positions around the map
+            target.position.x = (Math.random() - 0.5) * 60;
+            target.position.y = size + Math.random() * 5; // suspended at varying heights
+            target.position.z = (Math.random() - 0.5) * 60;
+
+            scene.add(target);
+            targets.push(target);
+        }
+
+        function shoot() {
+            // Gun recoil animation bounce
+            gun.position.z = -0.4;
+            setTimeout(() => gun.position.z = -0.5, 50);
+
+            // Raycasting to detect hits exactly where crosshair is pointing
+            const raycaster = new THREE.Raycaster();
+            // Center of the screen is (0,0) in normalized device coordinates
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+            const intersects = raycaster.intersectObjects(targets);
+
+            if (intersects.length > 0) {
+                const hitTarget = intersects[0].object;
+
+                // Visual hit effect (Flash target white briefly before destruction)
+                hitTarget.material.color.setHex(0xffffff);
+                
+                setTimeout(() => {
+                    scene.remove(hitTarget);
+                    targets = targets.filter(t => t !== hitTarget);
+                    
+                    // Increment Score
+                    score += 10;
+                    scoreElement.innerText = score;
+
+                    // Respawn a new target to keep the game going
+                    spawnTarget();
+                }, 40);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Main Game Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+
+            if (document.pointerLockElement === document.body) {
+                const delta = (time - prevTime) / 1000;
+
+                // Apply friction / deceleration
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+
+                // Determine direction vector
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize(); 
+
+                // Move Relative to Camera Direction
+                const camYaw = new THREE.Vector3();
+                camera.getWorldDirection(camYaw);
+                camYaw.y = 0; // Lock movement to horizontal ground plane
+                camYaw.normalize();
+
+                const camRight = new THREE.Vector3();
+                camRight.crossVectors(camYaw, camera.up).negate();
+
+                if (moveForward || moveBackward) {
+                    velocity.addScaledVector(camYaw, direction.z * 40.0 * delta);
+                }
+                if (moveLeft || moveRight) {
+                    velocity.addScaledVector(camRight, direction.x * 40.0 * delta);
+                }
+
+                // Translate position
+                camera.position.addScaledVector(velocity, delta);
+                
+                // Restrict boundaries so you don't wander off forever
+                camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
+                camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
+
+                // Float targets up and down gently for dynamic gameplay
+                targets.forEach((target, index) => {
+                    target.position.y += Math.sin(time * 0.002 + index) * 0.005;
+                });
+            }
+
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
