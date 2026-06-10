@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Target HP & Health Bars</title>
+    <title>3D WebGL FPS - Variable Tactical Scopes</title>
     <style>
         body {
             margin: 0;
@@ -29,21 +29,21 @@
         }
         #menu-panel {
             background: rgba(20, 20, 35, 0.9);
-            border: 2px solid #00ffff;
+            border: 2px solid #ff5f9e;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 30px rgba(255, 95, 158, 0.2);
             max-width: 500px;
         }
         #menu-panel h1 {
             margin-top: 0;
-            color: #00ffff;
+            color: #ff5f9e;
             letter-spacing: 4px;
             font-size: 32px;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            text-shadow: 0 0 10px rgba(255, 95, 158, 0.5);
         }
         .start-btn {
-            background: #00ffff;
+            background: #ff5f9e;
             color: #000;
             border: none;
             padding: 15px 40px;
@@ -54,7 +54,7 @@
             margin-top: 20px;
             letter-spacing: 2px;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 95, 158, 0.4);
         }
         .start-btn:hover {
             background: #ffffff;
@@ -105,19 +105,40 @@
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
             z-index: 6;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.95);
+            background: radial-gradient(circle, transparent 25%, rgba(0,0,0,0.85) 60%);
         }
         .scope-ring {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            border: 2px solid rgba(0, 255, 255, 0.4);
+            border: 2px solid rgba(255, 95, 158, 0.5);
             border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 95, 158, 0.2);
         }
-        #scope-outer { width: 400px; height: 400px; }
-        #scope-inner { width: 200px; height: 200px; border-style: dashed; }
-        #scope-reticle-h { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(0,255,255,0.5); }
-        #scope-reticle-v { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: rgba(0,255,255,0.5); }
+        #scope-outer { width: 500px; height: 500px; }
+        #scope-mid { width: 320px; height: 320px; border: 1px dashed rgba(255, 95, 158, 0.3); }
+        #scope-inner { width: 120px; height: 120px; border: 1px solid rgba(255, 95, 158, 0.6); }
+        
+        #scope-reticle-h { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: linear-gradient(to right, transparent, rgba(255,95,158,0.7) 30%, rgba(255,95,158,0.7) 70%, transparent); }
+        #scope-reticle-v { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: linear-gradient(to bottom, transparent, rgba(255,95,158,0.7) 30%, rgba(255,95,158,0.7) 70%, transparent); }
+
+        /* Tactical Data Readout inside the Scope */
+        #scope-hud-readout {
+            position: absolute;
+            top: calc(50% + 70px);
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff5f9e;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px rgba(255, 95, 158, 0.8);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 95, 158, 0.3);
+        }
 
         #hud {
             position: absolute;
@@ -132,7 +153,7 @@
         }
         #weapon-display {
             font-size: 16px;
-            color: #00ffff;
+            color: #ff5f9e;
             margin-top: 5px;
         }
 
@@ -145,17 +166,17 @@
             transform: translate(-50%, -50%);
             width: 420px;
             background: rgba(20, 20, 30, 0.95);
-            border: 2px solid #00ffff;
+            border: 2px solid #ff5f9e;
             border-radius: 10px;
             padding: 20px;
             color: white;
             z-index: 20;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 20px rgba(255, 95, 158, 0.3);
             text-align: center;
         }
         #inventory-bag h2 {
             margin-top: 0;
-            color: #00ffff;
+            color: #ff5f9e;
             letter-spacing: 2px;
         }
         .weapon-slot {
@@ -168,13 +189,13 @@
             transition: all 0.2s;
         }
         .weapon-slot:hover {
-            background: rgba(0, 255, 255, 0.2);
-            border-color: #00ffff;
+            background: rgba(255, 95, 158, 0.2);
+            border-color: #ff5f9e;
         }
         .weapon-slot.active {
-            background: rgba(0, 255, 255, 0.3);
-            border-color: #00ffff;
-            box-shadow: inset 0 0 10px rgba(0,255,255,0.5);
+            background: rgba(255, 95, 158, 0.3);
+            border-color: #ff5f9e;
+            box-shadow: inset 0 0 10px rgba(255,95,158,0.5);
         }
         .hint {
             font-size: 12px;
@@ -193,7 +214,7 @@
                 • <strong>W, A, S, D</strong> : Move Around<br/>
                 • <strong>MOUSE</strong> : Aim / Look Around<br/>
                 • <strong>LEFT CLICK</strong> : Fire Weapon (Hold for Auto)<br/>
-                • <strong>RIGHT CLICK</strong> : Toggle Scope Zoom<br/>
+                • <strong>RIGHT CLICK</strong> : Cycle Zoom (x2 -> x4 -> x6 -> Off)<br/>
                 • <strong>SPACEBAR</strong> : Jump Up<br/>
                 • <strong>CTRL KEY</strong> : Knee Down (Hold to crouch)<br/>
                 • <strong>B KEY</strong> : Open Weapon Bag
@@ -214,7 +235,7 @@
             <strong>Automatic Rifle</strong><br/><small>Full-Auto • 15 DMG</small>
         </div>
         <div class="weapon-slot" onclick="selectWeapon('sniper')">
-            <strong>Bolt Sniper</strong><br/><small>High Power • 100 DMG (Instant Kill)</small>
+            <strong>Bolt Sniper</strong><br/><small>High Power • 50 DMG</small>
         </div>
         <div class="weapon-slot" onclick="selectWeapon('shotgun')">
             <strong>Scatter Shotgun</strong><br/><small>Wide Spread • 12 DMG x 6 Pellets</small>
@@ -227,7 +248,9 @@
         <div id="scope-reticle-h"></div>
         <div id="scope-reticle-v"></div>
         <div class="scope-ring" id="scope-outer"></div>
+        <div class="scope-ring" id="scope-mid"></div>
         <div class="scope-ring" id="scope-inner"></div>
+        <div id="scope-hud-readout">[ 2X ZOOM ]</div>
     </div>
     
     <div id="hud">
@@ -253,25 +276,29 @@
         const bagElement = document.getElementById('inventory-bag');
         const crosshair = document.getElementById('crosshair');
         const scopeOverlay = document.getElementById('scope-overlay');
+        const scopeReadout = document.getElementById('scope-hud-readout');
 
         // Gun/Trigger System Configuration
         let gunContainer; 
         let isBagOpen = false;
-        let isScoped = false;
         let isLeftMouseDown = false;
         let lastShotTime = 0;
+
+        // Tactical Scope Zoom Level Arrays (0 = no scope, 1 = x2, 2 = x4, 3 = x6)
+        let zoomState = 0; 
+        const ZOOM_FOVS = [75, 45, 22.5, 12.5]; // Relative fields-of-view matching base 75 FOV
+        const ZOOM_LABELS = ["", "[ 2X ZOOM ]", "[ 4X ZOOM ]", "[ 6X ZOOM ]"];
 
         const DEFAULT_FOV = 75;
         const STAND_HEIGHT = 2;
         const KNEE_HEIGHT = 1;
         let currentBaseHeight = STAND_HEIGHT; 
 
-        // Added dynamic weapon damage stats
         const WEAPONS = {
-            pistol: { name: "Laser Pistol", fireRate: 300, damage: 25, isAuto: false, spread: 0.005, scopeFov: 55, color: 0x333333, length: 0.4, thickness: 0.08 },
-            autoRifle: { name: "Automatic Rifle", fireRate: 110, damage: 15, isAuto: true, spread: 0.04, scopeFov: 45, color: 0x2b3d26, length: 0.7, thickness: 0.12 },
-            sniper: { name: "Bolt Sniper", fireRate: 1200, damage: 100, isAuto: false, spread: 0.001, scopeFov: 15, color: 0x111111, length: 1.1, thickness: 0.09 },
-            shotgun: { name: "Scatter Shotgun", fireRate: 800, damage: 12, isAuto: false, spread: 0.14, scopeFov: 65, color: 0x554433, length: 0.6, thickness: 0.18 }
+            pistol: { name: "Laser Pistol", fireRate: 300, damage: 25, isAuto: false, spread: 0.005, color: 0x333333, length: 0.4, thickness: 0.08 },
+            autoRifle: { name: "Automatic Rifle", fireRate: 110, damage: 15, isAuto: true, spread: 0.04, color: 0x2b3d26, length: 0.7, thickness: 0.12 },
+            sniper: { name: "Bolt Sniper", fireRate: 1200, damage: 50, isAuto: false, spread: 0.001, color: 0x111111, length: 1.1, thickness: 0.09 },
+            shotgun: { name: "Scatter Shotgun", fireRate: 800, damage: 12, isAuto: false, spread: 0.14, color: 0x554433, length: 0.6, thickness: 0.18 }
         };
         let currentWeapon = 'pistol';
 
@@ -317,7 +344,6 @@
             renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // Blocker & Pointerlock context handling via Start Button
             const blocker = document.getElementById('blocker');
             const startButton = document.getElementById('start-button');
 
@@ -340,28 +366,28 @@
 
             document.addEventListener('contextmenu', event => event.preventDefault());
 
-            // Mouse Interactions
             document.addEventListener('mousemove', (event) => {
                 if (document.pointerLockElement !== document.body || isBagOpen) return;
 
-                const sensitivityModifier = isScoped ? (WEAPONS[currentWeapon].scopeFov / DEFAULT_FOV) : 0.8;
+                // Adjust look speed inversely based on magnification level
+                const baseSensitivity = 0.002;
+                const sensitivityModifier = (zoomState > 0) ? (ZOOM_FOVS[zoomState] / DEFAULT_FOV) : 0.8;
 
-                camera.rotation.y -= event.movementX * 0.002 * sensitivityModifier;
-                camera.rotation.x -= event.movementY * 0.002 * sensitivityModifier;
+                camera.rotation.y -= event.movementX * baseSensitivity * sensitivityModifier;
+                camera.rotation.x -= event.movementY * baseSensitivity * sensitivityModifier;
                 camera.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camera.rotation.x));
             });
 
             camera.rotation.order = "YXZ";
 
-            // Click handling triggers
             document.addEventListener('mousedown', (event) => {
                 if (document.pointerLockElement !== document.body || isBagOpen) return;
                 
-                if (event.button === 0) { // Left Click
+                if (event.button === 0) { 
                     isLeftMouseDown = true;
                     shoot(); 
-                } else if (event.button === 2) { // Right Click
-                    toggleScope();
+                } else if (event.button === 2) { 
+                    cycleScopeZoom();
                 }
             });
 
@@ -369,7 +395,6 @@
                 if (event.button === 0) isLeftMouseDown = false;
             });
 
-            // Keyboard Hooks
             const onKeyDown = (event) => {
                 if (event.code === 'KeyB') { toggleBag(); return; }
                 
@@ -417,16 +442,20 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        // --- Scope Dynamics ---
-        function toggleScope() {
-            isScoped = !isScoped;
-            const config = WEAPONS[currentWeapon];
+        // --- Multi-Tier Scope Zoom Logic ---
+        function cycleScopeZoom() {
+            // Cycle forward through levels: 0 (Off) -> 1 (x2) -> 2 (x4) -> 3 (x6) -> 0 (Off)
+            zoomState = (zoomState + 1) % 4;
 
-            if (isScoped) {
-                camera.fov = config.scopeFov;
+            if (zoomState > 0) {
+                camera.fov = ZOOM_FOVS[zoomState];
                 camera.updateProjectionMatrix();
+                
                 crosshair.style.opacity = '0';
                 scopeOverlay.style.display = 'block';
+                scopeReadout.innerText = ZOOM_LABELS[zoomState];
+                
+                // Align gun body lower on the screen to prevent obstructing optics visibility
                 gunContainer.position.set(0, -0.6, -0.3);
             } else {
                 exitScope();
@@ -434,7 +463,7 @@
         }
 
         function exitScope() {
-            isScoped = false;
+            zoomState = 0;
             camera.fov = DEFAULT_FOV;
             camera.updateProjectionMatrix();
             crosshair.style.opacity = '1';
@@ -514,7 +543,7 @@
             if (now - lastShotTime < config.fireRate) return;
             lastShotTime = now;
 
-            const originalZ = isScoped ? -0.3 : -0.5;
+            const originalZ = (zoomState > 0) ? -0.3 : -0.5;
             gunContainer.position.z = originalZ + 0.1;
             setTimeout(() => gunContainer.position.z = originalZ, 60);
 
@@ -522,7 +551,7 @@
 
             if (currentWeapon === 'shotgun') {
                 for (let i = 0; i < 6; i++) {
-                    const spreadModifier = isScoped ? 0.5 : 1.0;
+                    const spreadModifier = (zoomState > 0) ? 0.5 : 1.0;
                     const spreadX = (Math.random() - 0.5) * config.spread * spreadModifier;
                     const spreadY = (Math.random() - 0.5) * config.spread * spreadModifier;
                     
@@ -530,7 +559,7 @@
                     processRaycastHit(raycaster, 30, config.damage);
                 }
             } else {
-                let spreadModifier = isScoped ? 0.1 : 1.0;
+                let spreadModifier = (zoomState > 0) ? 0.1 : 1.0;
                 if (isKneeling) spreadModifier *= 0.7; 
                 if (!canJump) spreadModifier *= 2.5; 
 
@@ -543,7 +572,6 @@
         }
 
         function processRaycastHit(raycaster, maxDistance, damage) {
-            // Filter raycast check down directly to target shapes inside the composite groups
             const clickableObjects = targets.map(t => t.userData.meshLink);
             const intersects = raycaster.intersectObjects(clickableObjects);
 
@@ -553,17 +581,13 @@
 
                 if (parentGroup.userData.dead) return;
 
-                // Subtract Health Points (HP)
                 parentGroup.userData.health -= damage;
                 if (parentGroup.userData.health < 0) parentGroup.userData.health = 0;
 
-                // Calculate updated size for the green health foreground bar
-                const healthPercentage = parentGroup.userData.health / 100;
+                const healthPercentage = parentGroup.userData.health / parentGroup.userData.maxHealth;
                 parentGroup.userData.healthBarForeground.scale.x = Math.max(0.0001, healthPercentage);
-                // Offset the bar alignment to keep it anchored left
                 parentGroup.userData.healthBarForeground.position.x = - (1 - healthPercentage) * (parentGroup.userData.barWidth / 2);
 
-                // Hit indicator flash effect
                 hitMesh.material.color.setHex(0xff3333);
                 setTimeout(() => {
                     if (!parentGroup.userData.dead) {
@@ -571,7 +595,6 @@
                     }
                 }, 100);
 
-                // Check death conditions (0 HP)
                 if (parentGroup.userData.health <= 0) {
                     parentGroup.userData.dead = true;
                     hitMesh.material.color.setHex(0xffffff);
@@ -580,7 +603,8 @@
                     setTimeout(() => {
                         scene.remove(parentGroup);
                         targets = targets.filter(t => t !== parentGroup);
-                        score += 10;
+                        
+                        score += (parentGroup.userData.maxHealth === 500) ? 50 : 10;
                         scoreElement.innerText = score;
                         spawnTarget();
                     }, 60);
@@ -589,11 +613,15 @@
         }
 
         function spawnTarget() {
-            // Create a structural anchor group to link both the geometric target and its health bar UI together
             const targetGroup = new THREE.Group();
 
+            const isBoss = Math.random() < 0.20;
+            const maxHP = isBoss ? 500 : 100;
+            
+            let size = Math.random() * 0.4 + 0.4;
+            if (isBoss) size *= 1.8; 
+
             let geometry;
-            const size = Math.random() * 0.4 + 0.4;
             const shapeType = Math.floor(Math.random() * 4);
 
             switch (shapeType) {
@@ -603,50 +631,55 @@
                 case 3: geometry = new THREE.TorusGeometry(size * 0.6, size * 0.2, 8, 24); break;
             }
             
-            const colors = [0xff3333, 0x33ff33, 0x3333ff, 0xffaa00, 0x00ffff, 0xff00ff];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            let randomColor;
+            if (isBoss) {
+                randomColor = 0xffaa00; 
+            } else {
+                const colors = [0xff3333, 0x33ff33, 0x3333ff, 0xff5f9e, 0xff00ff];
+                randomColor = colors[Math.floor(Math.random() * colors.length)];
+            }
 
-            const material = new THREE.MeshStandardMaterial({ color: randomColor, emissive: randomColor, emissiveIntensity: 0.1 });
+            const material = new THREE.MeshStandardMaterial({ 
+                color: randomColor, 
+                emissive: randomColor, 
+                emissiveIntensity: isBoss ? 0.3 : 0.1 
+            });
             const targetMesh = new THREE.Mesh(geometry, material);
             targetGroup.add(targetMesh);
 
-            // --- Construct Floating 3D Health Bar Group Infrastructure ---
             const barWidth = size * 1.5;
-            const barHeight = 0.12;
+            const barHeight = isBoss ? 0.18 : 0.12;
             
             const healthBarGroup = new THREE.Group();
-            healthBarGroup.position.y = size + 0.4; // Positions health bar directly above target mesh
+            healthBarGroup.position.y = size + (isBoss ? 0.7 : 0.4); 
 
-            // 1. Dark background bar channel
             const bgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
             const bgMat = new THREE.MeshBasicMaterial({ color: 0x440000, side: THREE.DoubleSide });
             const barBg = new THREE.Mesh(bgGeo, bgMat);
             healthBarGroup.add(barBg);
 
-            // 2. Bright active green foreground health tracker bar
             const fgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
-            const fgMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+            const fgMat = new THREE.MeshBasicMaterial({ color: isBoss ? 0xff0055 : 0x00ff00, side: THREE.DoubleSide });
             const barFg = new THREE.Mesh(fgGeo, fgMat);
-            barFg.position.z = 0.01; // Tiny depth layer offset to eliminate overlapping artifacts
+            barFg.position.z = 0.01; 
             healthBarGroup.add(barFg);
 
             targetGroup.add(healthBarGroup);
 
-            // Setup configuration properties
             targetGroup.userData = {
-                health: 100, // Maximum blood is 100HP
+                health: maxHP, 
+                maxHealth: maxHP,
                 dead: false,
                 meshLink: targetMesh,
                 originalColor: randomColor,
                 healthBarContainer: healthBarGroup,
                 healthBarForeground: barFg,
                 barWidth: barWidth,
-                spinX: (Math.random() - 0.5) * 2,
-                spinY: (Math.random() - 0.5) * 2,
+                spinX: (Math.random() - 0.5) * (isBoss ? 0.8 : 2), 
+                spinY: (Math.random() - 0.5) * (isBoss ? 0.8 : 2),
                 floatOffset: Math.random() * 10
             };
 
-            // Set positions
             targetGroup.position.x = (Math.random() - 0.5) * 80;
             targetGroup.position.y = size + 1 + Math.random() * 8;
             targetGroup.position.z = (Math.random() - 0.5) * 80;
@@ -693,7 +726,7 @@
                 const camRight = new THREE.Vector3();
                 camRight.crossVectors(camYaw, camera.up).negate();
 
-                let speedModifier = isScoped ? 0.4 : 1.0;
+                let speedModifier = (zoomState > 0) ? 0.4 : 1.0;
                 if (isKneeling) speedModifier *= 0.5;
                 if (!canJump) speedModifier *= 0.65; 
 
@@ -713,16 +746,10 @@
                 camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
                 camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
 
-                // Update targets
                 targets.forEach((targetGroup) => {
-                    // Spin only the target's geometric mesh element
                     targetGroup.userData.meshLink.rotation.x += targetGroup.userData.spinX * delta;
                     targetGroup.userData.meshLink.rotation.y += targetGroup.userData.spinY * delta;
-                    
-                    // Float the entire composite structure vertically
                     targetGroup.position.y += Math.sin((time * 0.002) + targetGroup.userData.floatOffset) * 0.005;
-
-                    // Billboard Health Bar Constraint: Rotates bars to always face the player camera directly
                     targetGroup.userData.healthBarContainer.quaternion.copy(camera.quaternion);
                 });
             }
