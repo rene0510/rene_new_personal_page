@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Input & Movement Fix</title>
+    <title>3D WebGL FPS - ESC Key Settings Engine</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -214,7 +214,6 @@
         let activeSimulationRunning = false;
         let settingsMenuOpen = false;
 
-        // --- FIXED: Explicit Global Movement Allocation Matrices ---
         const keysPressed = { KeyW: false, KeyA: false, KeyS: false, KeyD: false };
         const direction = new THREE.Vector3(); 
         const velocity = new THREE.Vector3();
@@ -284,14 +283,14 @@
                 launchGameModeDeployment();
             });
 
-            // --- FIXED: Fail-Safe Backup Pointer Catch ---
-            // If the lock fails on setup, clicking anywhere inside the active simulation captures controls manually.
             document.body.addEventListener('click', () => {
                 if(activeSimulationRunning && !settingsMenuOpen && document.pointerLockElement !== document.body) {
                     document.body.requestPointerLock();
                 }
             });
 
+            // --- CRITICAL ESC KEY LISTENER ENGINE ---
+            // Whenever pointer lock is lost (which happens when the user hits 'ESC'), open the Settings screen!
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
                     if (activeSimulationRunning) {
@@ -367,7 +366,7 @@
             document.body.requestPointerLock();
         }
 
-        // --- Escape Button Menu System Operations ---
+        // --- Settings Panel Operations ---
         function openSettingsMenu() {
             settingsMenuOpen = true;
             settingsOverlay.style.display = 'flex';
@@ -612,7 +611,6 @@
 
                 velocity.x -= velocity.x * 10.0 * delta; velocity.z -= velocity.z * 10.0 * delta; velocity.y -= 9.8 * 3.5 * delta; 
 
-                // Process combined diagonal translation vectors cleanly
                 direction.z = Number(keysPressed.KeyW) - Number(keysPressed.KeyS);
                 direction.x = Number(keysPressed.KeyD) - Number(keysPressed.KeyA);
                 direction.normalize(); 
@@ -624,48 +622,4 @@
                 if (isShielding) movementSpeed *= 0.45; if (isKneeling) movementSpeed *= 0.5; if (!canJump) movementSpeed *= 0.65; 
 
                 if (keysPressed.KeyW || keysPressed.KeyS) velocity.addScaledVector(camYaw, direction.z * movementSpeed * delta);
-                if (keysPressed.KeyA || keysPressed.KeyD) velocity.addScaledVector(camRight, direction.x * movementSpeed * delta);
-
-                camera.position.x += velocity.x * delta; camera.position.z += velocity.z * delta; camera.position.y += velocity.y * delta; 
-                if (camera.position.y < currentBaseHeight) { velocity.y = 0; camera.position.y = currentBaseHeight; canJump = true; }
-
-                broadcastMovementPacket();
-
-                // Object Rotations
-                targets.forEach((targetGroup) => {
-                    targetGroup.userData.meshLink.rotation.x += targetGroup.userData.spinX * delta;
-                    targetGroup.userData.meshLink.rotation.y += targetGroup.userData.spinY * delta;
-                    targetGroup.userData.healthBarContainer.quaternion.copy(camera.quaternion);
-                });
-
-                // Enemy AI Processing Loops
-                enemies.forEach((enemy) => {
-                    if (enemy.userData.dead) return;
-                    enemy.userData.patrolTimer -= delta;
-                    if(enemy.userData.patrolTimer <= 0) {
-                        enemy.userData.patrolTimer = Math.random() * 3 + 2;
-                        enemy.userData.moveDir.set((Math.random()-0.5), 0, (Math.random()-0.5)).normalize();
-                    }
-                    enemy.position.addScaledVector(enemy.userData.moveDir, 4.5 * delta);
-                    enemy.userData.leftLegLink.rotation.x = Math.sin(time * 0.007) * 0.4;
-                    enemy.userData.rightLegLink.rotation.x = -Math.sin(time * 0.007) * 0.4;
-                    enemy.lookAt(camera.position.x, enemy.position.y, camera.position.z);
-                    enemy.userData.healthBarContainer.quaternion.copy(camera.quaternion);
-
-                    if (enemy.position.distanceTo(camera.position) < 45) {
-                        if (time - enemy.userData.lastShotTime > 1500) { 
-                            enemy.userData.lastShotTime = time;
-                            const laserPoints = [new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z), new THREE.Vector3(camera.position.x, camera.position.y - 0.2, camera.position.z)];
-                            const laserLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(laserPoints), new THREE.LineBasicMaterial({ color: 0xff0033 }));
-                            scene.add(laserLine); setTimeout(() => scene.remove(laserLine), 70);
-                            if (!isShielding) damagePlayer(10);
-                        }
-                    }
-                });
-            }
-            prevTime = time;
-            renderer.render(scene, camera);
-        }
-    </script>
-</body>
-</html>
+                if (keysPressed.KeyA || keysPressed.KeyD) velocity.addScaledVector(camRight, direction.x * movementSpeed * delta
