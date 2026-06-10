@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Scopes & Automatic Weapons</title>
+    <title>3D WebGL FPS - Physics, Crouch & Jump</title>
     <style>
         body {
             margin: 0;
@@ -12,25 +12,71 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
+        
+        /* --- Start Screen & Blocker Overlay --- */
         #blocker {
             position: absolute;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.7);
+            background-color: rgba(10, 10, 20, 0.85);
             display: flex;
             justify-content: center;
             align-items: center;
             color: #fff;
             text-align: center;
-            cursor: pointer;
             z-index: 10;
+            transition: background-color 0.3s;
         }
-        #instructions {
-            font-size: 24px;
+        #menu-panel {
+            background: rgba(20, 20, 35, 0.9);
+            border: 2px solid #00ffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+            max-width: 500px;
         }
-        #instructions span {
+        #menu-panel h1 {
+            margin-top: 0;
+            color: #00ffff;
+            letter-spacing: 4px;
+            font-size: 32px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .start-btn {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            letter-spacing: 2px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+        .start-btn:hover {
+            background: #ffffff;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.6);
+        }
+        .controls-list {
+            text-align: left;
+            display: inline-block;
+            margin: 20px 0;
+            color: #ccc;
             font-size: 16px;
-            color: #aaa;
+            line-height: 1.6;
+        }
+        .controls-list strong {
+            color: #fff;
+        }
+        #menu-panel span {
+            font-size: 13px;
+            color: #777;
+            display: block;
+            margin-top: 15px;
         }
         
         /* --- Crosshair & Tactical Scope --- */
@@ -141,14 +187,20 @@
 <body>
 
     <div id="blocker">
-        <div id="instructions">
-            <strong>CLICK TO PLAY</strong><br/><br/>
-            W, A, S, D = Move<br/>
-            MOUSE = Look Around<br/>
-            LEFT CLICK = Shoot (Hold for Auto)<br/>
-            <strong>RIGHT CLICK = AIM DOWN SCOPE</strong><br/>
-            <strong>PRESS 'B' = OPEN WEAPON BAG</strong><br/><br/>
-            <span>(Press ESC to exit)</span>
+        <div id="menu-panel">
+            <h1>CYBER RANGE 3D</h1>
+            <div class="controls-list">
+                • <strong>W, A, S, D</strong> : Move Around<br/>
+                • <strong>MOUSE</strong> : Aim / Look Around<br/>
+                • <strong>LEFT CLICK</strong> : Fire Weapon (Hold for Auto)<br/>
+                • <strong>RIGHT CLICK</strong> : Toggle Scope Zoom<br/>
+                • <strong>SPACEBAR</strong> : Jump Up<br/>
+                • <strong>CTRL KEY</strong> : Knee Down (Hold to crouch)<br/>
+                • <strong>B KEY</strong> : Open Weapon Bag
+            </div>
+            <br/>
+            <button class="start-btn" id="start-button">START GAME</button>
+            <span>Press ESC during gameplay to return to this menu</span>
         </div>
     </div>
 
@@ -187,6 +239,9 @@
         // --- Game Setup ---
         let scene, camera, renderer;
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let isKneeling = false;
+        let canJump = false; // Tracks ground-contact to prevent infinite mid-air leaps
+        
         let prevTime = performance.now();
         const velocity = new THREE.Vector3();
         const direction = new THREE.Vector3();
@@ -207,6 +262,9 @@
         let lastShotTime = 0;
 
         const DEFAULT_FOV = 75;
+        const STAND_HEIGHT = 2;
+        const KNEE_HEIGHT = 1;
+        let currentBaseHeight = STAND_HEIGHT; // Reference point for tracking gravity thresholds
 
         const WEAPONS = {
             pistol: { name: "Laser Pistol", fireRate: 300, isAuto: false, spread: 0.005, scopeFov: 55, color: 0x333333, length: 0.4, thickness: 0.08 },
@@ -226,7 +284,7 @@
             scene.fog = new THREE.FogExp2(0x11111d, 0.015);
 
             camera = new THREE.PerspectiveCamera(DEFAULT_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.y = 2; 
+            camera.position.y = STAND_HEIGHT; 
 
             const ambientLight = new THREE.AmbientLight(0x666666);
             scene.add(ambientLight);
@@ -258,15 +316,21 @@
             renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // Blocker & Pointerlock context handling
+            // Blocker & Pointerlock context handling via Start Button
             const blocker = document.getElementById('blocker');
-            blocker.addEventListener('click', () => {
-                if (!isBagOpen) document.body.requestPointerLock();
+            const startButton = document.getElementById('start-button');
+
+            startButton.addEventListener('click', () => {
+                document.body.requestPointerLock();
             });
 
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
-                    if (!isBagOpen) blocker.style.display = 'flex';
+                    if (!isBagOpen) {
+                        blocker.style.display = 'flex';
+                        document.querySelector('#menu-panel h1').innerText = "GAME PAUSED";
+                        document.getElementById('start-button').innerText = "RESUME GAME";
+                    }
                     exitScope(); 
                 } else {
                     blocker.style.display = 'none';
@@ -280,8 +344,7 @@
             document.addEventListener('mousemove', (event) => {
                 if (document.pointerLockElement !== document.body || isBagOpen) return;
 
-                // Turn slower when zoomed through a scope to make fine adjustments easy
-                const sensitivityModifier = isScoped ? (WEAPONS[currentWeapon].scopeFov / DEFAULT_FOV) : 1.0;
+                const sensitivityModifier = isScoped ? (WEAPONS[currentWeapon].scopeFov / DEFAULT_FOV) : 0.8;
 
                 camera.rotation.y -= event.movementX * 0.002 * sensitivityModifier;
                 camera.rotation.x -= event.movementY * 0.002 * sensitivityModifier;
@@ -309,6 +372,24 @@
             // Keyboard Hooks
             const onKeyDown = (event) => {
                 if (event.code === 'KeyB') { toggleBag(); return; }
+                
+                // CTRL KEY TO KNEE DOWN / CROUCH
+                if (event.code === 'ControlLeft' || event.code === 'ControlRight') {
+                    event.preventDefault();
+                    isKneeling = true;
+                    return;
+                }
+
+                // SPACEBAR KEY TO JUMP
+                if (event.code === 'Space') {
+                    event.preventDefault();
+                    if (canJump && !isKneeling) {
+                        velocity.y = 12.0; // Upward impulse speed force
+                        canJump = false;
+                    }
+                    return;
+                }
+                
                 if (isBagOpen) return;
 
                 switch (event.code) {
@@ -320,6 +401,11 @@
             };
 
             const onKeyUp = (event) => {
+                if (event.code === 'ControlLeft' || event.code === 'ControlRight') {
+                    isKneeling = false;
+                    return;
+                }
+
                 switch (event.code) {
                     case 'KeyW': moveForward = false; break;
                     case 'KeyA': moveLeft = false; break;
@@ -341,12 +427,8 @@
             if (isScoped) {
                 camera.fov = config.scopeFov;
                 camera.updateProjectionMatrix();
-                
-                // UI Adaptations
                 crosshair.style.opacity = '0';
                 scopeOverlay.style.display = 'block';
-
-                // Shift weapon mesh down and center out of camera frustum view
                 gunContainer.position.set(0, -0.6, -0.3);
             } else {
                 exitScope();
@@ -362,12 +444,15 @@
             resetGunInertialPosition();
         }
 
+        // --- Positioning Helpers ---
         function resetGunInertialPosition() {
             gunContainer.position.set(0.2, -0.25, -0.5);
         }
 
         // --- Inventory Adjustments ---
         function toggleBag() {
+            if (document.pointerLockElement !== document.body && !isBagOpen) return;
+
             isBagOpen = !isBagOpen;
             if (isBagOpen) {
                 isLeftMouseDown = false;
@@ -396,32 +481,26 @@
 
             const config = WEAPONS[currentWeapon];
 
-            // Base Weapon Barrel
             const gunGeo = new THREE.BoxGeometry(config.thickness, config.thickness, config.length);
             const gunMat = new THREE.MeshStandardMaterial({ color: config.color, metalness: 0.7, roughness: 0.3 });
             const barrel = new THREE.Mesh(gunGeo, gunMat);
             barrel.position.z = -config.length / 2;
             gunContainer.add(barrel);
 
-            // MANDATORY SCOPE ATTACHMENT MODEL PARTS (Rendered physically onto every weapon variant)
             const scopeHousingGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.2);
             scopeHousingGeo.rotateX(Math.PI / 2);
             const scopeHousingMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.9 });
             const physicalScope = new THREE.Mesh(scopeHousingGeo, scopeHousingMat);
             
-            // Mount the structural scope box on top center of the barrel frames
             physicalScope.position.set(0, config.thickness / 1.6, -config.length / 2);
             gunContainer.add(physicalScope);
 
-            // Scope Mount rings
             const mountGeo = new THREE.BoxGeometry(0.01, 0.03, 0.02);
             const mount1 = new THREE.Mesh(mountGeo, scopeHousingMat);
             mount1.position.set(0, config.thickness / 2, -config.length / 2.5);
             gunContainer.add(mount1);
 
-            // Variant adjustments
             if (currentWeapon === 'sniper') {
-                // Long structural scope shading hood
                 const lensHoodGeo = new THREE.CylinderGeometry(0.035, 0.025, 0.1);
                 lensHoodGeo.rotateX(Math.PI / 2);
                 const hood = new THREE.Mesh(lensHoodGeo, scopeHousingMat);
@@ -436,3 +515,164 @@
             const config = WEAPONS[currentWeapon];
 
             if (now - lastShotTime < config.fireRate) return;
+            lastShotTime = now;
+
+            const originalZ = isScoped ? -0.3 : -0.5;
+            gunContainer.position.z = originalZ + 0.1;
+            setTimeout(() => gunContainer.position.z = originalZ, 60);
+
+            const raycaster = new THREE.Raycaster();
+
+            if (currentWeapon === 'shotgun') {
+                for (let i = 0; i < 6; i++) {
+                    const spreadModifier = isScoped ? 0.5 : 1.0;
+                    const spreadX = (Math.random() - 0.5) * config.spread * spreadModifier;
+                    const spreadY = (Math.random() - 0.5) * config.spread * spreadModifier;
+                    
+                    raycaster.setFromCamera(new THREE.Vector2(spreadX, spreadY), camera);
+                    processRaycastHit(raycaster, 30);
+                }
+            } else {
+                let spreadModifier = isScoped ? 0.1 : 1.0;
+                if (isKneeling) spreadModifier *= 0.7; 
+                if (!canJump) spreadModifier *= 2.5; // Hipfire accuracy penalty applies when flying mid-air
+
+                const spreadX = (Math.random() - 0.5) * config.spread * spreadModifier;
+                const spreadY = (Math.random() - 0.5) * config.spread * spreadModifier;
+
+                raycaster.setFromCamera(new THREE.Vector2(spreadX, spreadY), camera);
+                processRaycastHit(raycaster, 150);
+            }
+        }
+
+        function processRaycastHit(raycaster, maxDistance) {
+            const intersects = raycaster.intersectObjects(targets);
+
+            if (intersects.length > 0 && intersects[0].distance <= maxDistance) {
+                const hitTarget = intersects[0].object;
+                if (hitTarget.userData.dead) return;
+                hitTarget.userData.dead = true;
+
+                hitTarget.material.color.setHex(0xffffff);
+                hitTarget.material.emissive.setHex(0xffffff);
+                
+                setTimeout(() => {
+                    scene.remove(hitTarget);
+                    targets = targets.filter(t => t !== hitTarget);
+                    score += 10;
+                    scoreElement.innerText = score;
+                    spawnTarget();
+                }, 40);
+            }
+        }
+
+        function spawnTarget() {
+            let geometry;
+            const size = Math.random() * 0.4 + 0.4;
+            const shapeType = Math.floor(Math.random() * 4);
+
+            switch (shapeType) {
+                case 0: geometry = new THREE.SphereGeometry(size * 0.8, 16, 16); break;
+                case 1: geometry = new THREE.BoxGeometry(size, size, size); break;
+                case 2: geometry = new THREE.ConeGeometry(size * 0.7, size * 1.4, 16); break;
+                case 3: geometry = new THREE.TorusGeometry(size * 0.6, size * 0.2, 8, 24); break;
+            }
+            
+            const colors = [0xff3333, 0x33ff33, 0x3333ff, 0xffaa00, 0x00ffff, 0xff00ff];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+            const material = new THREE.MeshStandardMaterial({ color: randomColor, emissive: randomColor, emissiveIntensity: 0.2 });
+            const target = new THREE.Mesh(geometry, material);
+
+            target.userData = {
+                spinX: (Math.random() - 0.5) * 2,
+                spinY: (Math.random() - 0.5) * 2,
+                floatOffset: Math.random() * 10
+            };
+
+            target.position.x = (Math.random() - 0.5) * 80;
+            target.position.y = size + 1 + Math.random() * 8;
+            target.position.z = (Math.random() - 0.5) * 80;
+
+            scene.add(target);
+            targets.push(target);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Engine Frame Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+
+            if (document.pointerLockElement === document.body && !isBagOpen) {
+                const delta = (time - prevTime) / 1000;
+
+                if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) {
+                    shoot();
+                }
+
+                // Smoothly determine target height base if crouching vs standing
+                const targetBaseHeight = isKneeling ? KNEE_HEIGHT : STAND_HEIGHT;
+                currentBaseHeight += (targetBaseHeight - currentBaseHeight) * 12.0 * delta;
+
+                // --- 3D Movement Friction & Input Vectors ---
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                
+                // SIMULATE ENGINE GRAVITY DOWNWARD ACCELERATION
+                velocity.y -= 9.8 * 3.5 * delta; // Mass weight gravity factor
+
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize(); 
+
+                const camYaw = new THREE.Vector3();
+                camera.getWorldDirection(camYaw);
+                camYaw.y = 0; 
+                camYaw.normalize();
+
+                const camRight = new THREE.Vector3();
+                camRight.crossVectors(camYaw, camera.up).negate();
+
+                // Airstrafe penalties (Slightly less control acceleration while flying in the air)
+                let speedModifier = isScoped ? 0.4 : 1.0;
+                if (isKneeling) speedModifier *= 0.5;
+                if (!canJump) speedModifier *= 0.65; 
+
+                if (moveForward || moveBackward) velocity.addScaledVector(camYaw, direction.z * 40.0 * delta * speedModifier);
+                if (moveLeft || moveRight) velocity.addScaledVector(camRight, direction.x * 40.0 * delta * speedModifier);
+
+                // --- Apply Axis Velocities to Camera Model Position ---
+                camera.position.x += velocity.x * delta;
+                camera.position.z += velocity.z * delta;
+                camera.position.y += velocity.y * delta; // Apply gravity / jump physics vector
+
+                // BOUNDARY CHECK: Prevent falling below floor level mesh
+                if (camera.position.y < currentBaseHeight) {
+                    velocity.y = 0;
+                    camera.position.y = currentBaseHeight;
+                    canJump = true; // Landing resets ground status allowing another jump
+                }
+
+                camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
+                camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
+
+                targets.forEach((target) => {
+                    target.rotation.x += target.userData.spinX * delta;
+                    target.rotation.y += target.userData.spinY * delta;
+                    target.position.y += Math.sin((time * 0.002) + target.userData.floatOffset) * 0.005;
+                });
+            }
+
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
