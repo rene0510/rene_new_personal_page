@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Visual Hotbar & Enemies</title>
+    <title>3D WebGL FPS - Humanoid Enemies & Enhanced Speed</title>
     <style>
         body {
             margin: 0;
@@ -16,92 +16,57 @@
         /* --- Start Screen & Blocker Overlay --- */
         #blocker {
             position: absolute;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background-color: rgba(10, 10, 20, 0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            text-align: center;
-            z-index: 10;
+            display: flex; justify-content: center; align-items: center;
+            color: #fff; text-align: center; z-index: 10;
         }
         #menu-panel {
             background: rgba(20, 20, 35, 0.9);
             border: 2px solid #ff5f9e;
-            padding: 40px;
-            border-radius: 15px;
+            padding: 40px; border-radius: 15px;
             box-shadow: 0 0 30px rgba(255, 95, 158, 0.2);
             max-width: 540px;
         }
         #menu-panel h1 {
-            margin-top: 0;
-            color: #ff5f9e;
-            letter-spacing: 4px;
-            font-size: 32px;
-            text-shadow: 0 0 10px rgba(255, 95, 158, 0.5);
+            margin-top: 0; color: #ff5f9e; letter-spacing: 4px;
+            font-size: 32px; text-shadow: 0 0 10px rgba(255, 95, 158, 0.5);
         }
         .start-btn {
-            background: #ff5f9e;
-            color: #000;
-            border: none;
-            padding: 15px 40px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-            letter-spacing: 2px;
-            transition: all 0.2s ease;
+            background: #ff5f9e; color: #000; border: none;
+            padding: 15px 40px; font-size: 20px; font-weight: bold;
+            border-radius: 5px; cursor: pointer; margin-top: 20px;
+            letter-spacing: 2px; transition: all 0.2s ease;
             box-shadow: 0 4px 15px rgba(255, 95, 158, 0.4);
         }
-        .start-btn:hover {
-            background: #ffffff;
-            transform: scale(1.05);
-        }
+        .start-btn:hover { background: #ffffff; transform: scale(1.05); }
         .controls-list {
-            text-align: left;
-            display: inline-block;
-            margin: 20px 0;
-            color: #ccc;
-            font-size: 15px;
-            line-height: 1.5;
+            text-align: left; display: inline-block; margin: 20px 0;
+            color: #ccc; font-size: 15px; line-height: 1.5;
         }
-        .controls-list strong {
-            color: #fff;
-        }
+        .controls-list strong { color: #fff; }
         
         /* --- Crosshair & Tactical Scope --- */
         #crosshair {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 10px; height: 10px;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 5;
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px; transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 5;
         }
         #crosshair::before, #crosshair::after {
-            content: '';
-            position: absolute;
-            background: rgba(255, 255, 255, 0.8);
+            content: ''; position: absolute; background: rgba(255, 255, 255, 0.8);
         }
         #crosshair::before { top: 4px; left: -5px; width: 20px; height: 2px; }
         #crosshair::after { top: -5px; left: 4px; width: 2px; height: 20px; }
         
         #scope-overlay {
-            display: none;
-            position: absolute;
+            display: none; position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 6;
+            pointer-events: none; z-index: 6;
             background: radial-gradient(circle, transparent 25%, rgba(0,0,0,0.85) 60%);
         }
         .scope-ring {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border: 2px solid rgba(255, 95, 158, 0.5);
-            border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            border: 2px solid rgba(255, 95, 158, 0.5); border-radius: 50%;
         }
         #scope-outer { width: 500px; height: 500px; }
         #scope-mid { width: 320px; height: 320px; border: 1px dashed rgba(255, 95, 158, 0.3); }
@@ -114,13 +79,11 @@
             padding: 4px 12px; border-radius: 3px; border: 1px solid rgba(255, 95, 158, 0.3);
         }
 
-        /* --- Kinetic Shield Defensive Overlay --- */
+        /* --- Shield Visuals --- */
         #shield-overlay {
-            display: none;
-            position: absolute;
+            display: none; position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 4;
+            pointer-events: none; z-index: 4;
             border: 15px solid rgba(0, 180, 255, 0.4);
             box-shadow: inset 0 0 80px rgba(0, 150, 255, 0.3);
             box-sizing: border-box;
@@ -128,87 +91,48 @@
 
         /* --- Score & Vitals HUD --- */
         #hud {
-            position: absolute;
-            top: 20px; left: 20px;
-            color: #fff;
-            pointer-events: none;
-            z-index: 5;
-            font-weight: bold;
+            position: absolute; top: 20px; left: 20px;
+            color: #fff; pointer-events: none; z-index: 5; font-weight: bold;
         }
-        #vitals-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 5px;
-        }
+        #vitals-container { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         #hp-bar-bg {
-            width: 200px; height: 16px; background: rgba(100,0,0,0.5);
+            width: 250px; height: 18px; background: rgba(100,0,0,0.5);
             border: 2px solid #ff3333; border-radius: 3px; overflow: hidden;
         }
-        #hp-bar-fg {
-            width: 100%; height: 100%; background: #ff3333;
-            transition: width 0.1s ease;
-        }
+        #hp-bar-fg { width: 100%; height: 100%; background: #ff3333; transition: width 0.05s ease; }
         #score-display { font-size: 24px; text-shadow: 2px 2px 4px #000; }
 
-        /* --- Roblox Style Hotbar with Visual Weapon Logos --- */
+        /* --- Roblox Hotbar Layout --- */
         #roblox-hotbar {
-            position: absolute;
-            bottom: 15px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 8px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 6px; border-radius: 8px;
-            pointer-events: auto; z-index: 5;
+            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px; background: rgba(0, 0, 0, 0.6);
+            padding: 6px; border-radius: 8px; pointer-events: auto; z-index: 5;
         }
         .hotbar-slot {
-            width: 85px; height: 80px;
-            background: rgba(35, 35, 45, 0.85);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px; color: #eee;
-            position: relative; cursor: pointer;
-            display: flex; flex-direction: column;
-            justify-content: space-between; align-items: center;
-            padding: 6px 2px; box-sizing: border-box;
-            transition: all 0.1s ease;
-        }
-        .hotbar-slot:hover {
-            background: rgba(50, 50, 65, 0.9);
-            border-color: rgba(255, 255, 255, 0.5);
+            width: 85px; height: 80px; background: rgba(35, 35, 45, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #eee;
+            position: relative; cursor: pointer; display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center; padding: 6px 2px; box-sizing: border-box;
         }
         .hotbar-slot.active {
-            background: rgba(255, 95, 158, 0.25);
-            border: 2px solid #ff5f9e;
-            box-shadow: 0 0 12px rgba(255, 95, 158, 0.5);
-            color: #fff;
+            background: rgba(255, 95, 158, 0.25); border: 2px solid #ff5f9e;
+            box-shadow: 0 0 12px rgba(255, 95, 158, 0.5); color: #fff;
         }
-        .slot-number {
-            position: absolute; top: 3px; left: 5px;
-            font-size: 11px; font-weight: bold; color: rgba(255, 255, 255, 0.4);
-        }
+        .slot-number { position: absolute; top: 3px; left: 5px; font-size: 11px; font-weight: bold; color: rgba(255, 255, 255, 0.4); }
         .hotbar-slot.active .slot-number { color: #ff5f9e; }
         .slot-name { font-size: 11px; font-weight: bold; text-align: center; }
 
-        /* CSS Weapon Weapon Logo Graphics */
-        .weapon-logo {
-            width: 40px; height: 25px;
-            position: relative; margin-top: 10px;
-            display: flex; justify-content: center; align-items: center;
-        }
-        /* Logo Shapes */
+        /* Weapon Vector Logos */
+        .weapon-logo { width: 40px; height: 25px; position: relative; margin-top: 10px; display: flex; justify-content: center; align-items: center; }
         .logo-pistol { width: 18px; height: 10px; background: #aaa; border-radius: 2px; transform: translateX(-2px); }
         .logo-pistol::after { content:''; position: absolute; top: 6px; left: 10px; width: 6px; height: 10px; background: #aaa; transform: rotate(-25deg); }
-        
         .logo-rifle { width: 30px; height: 6px; background: #556b2f; }
         .logo-rifle::after { content:''; position: absolute; top: 4px; left: 5px; width: 4px; height: 10px; background: #444; }
-
         .logo-sniper { width: 36px; height: 4px; background: #444; }
         .logo-sniper::before { content:''; position: absolute; top: -5px; left: 14px; width: 10px; height: 4px; background: #222; }
         .logo-sniper::after { content:''; position: absolute; top: 3px; left: 2px; width: 6px; height: 8px; background: #333; }
-
         .logo-shotgun { width: 28px; height: 8px; background: #8b4513; border-radius: 1px; }
         .logo-shotgun::after { content:''; position: absolute; right: -4px; width: 10px; height: 5px; background: #333; }
-
         .logo-knife { width: 28px; height: 5px; background: #ddd; border-top-right-radius: 8px 5px; }
         .logo-knife::after { content:''; position: absolute; left: -8px; width: 8px; height: 6px; background: #8b2500; border-radius: 1px; }
     </style>
@@ -220,14 +144,13 @@
         <div id="menu-panel">
             <h1>CYBER RANGE 3D</h1>
             <div class="controls-list">
-                • <strong>W, A, S, D</strong> : Move Around / Avoid Enemy Fire<br/>
+                • <strong>W, A, S, D</strong> : Move Around (+20% Speed Boost)<br/>
                 • <strong>MOUSE</strong> : Aim Weapon / Look Around<br/>
-                • <strong>LEFT CLICK</strong> : Attack / Fire Weapon (Hold for Auto)<br/>
-                • <strong>RIGHT CLICK</strong> : Cycle Zoom (x2 -> x4 -> x6 -> Off)<br/>
-                • <strong>KEYS 1 - 5</strong> : Switch Hotbar Inventory Items Instantly<br/>
-                • <strong>SPACEBAR</strong> : Jump up to evade drone projectiles<br/>
-                • <strong>CTRL KEY</strong> : Crouch down to duck under incoming rays<br/>
-                • <strong>HOLD SHIFT</strong> : Deploy Kinetic Energy Shield (Block All Damage)
+                • <strong>LEFT CLICK</strong> : Attack / Fire Weapon<br/>
+                • <strong>RIGHT CLICK</strong> : Cycle Scope Optics (x2 -> x4 -> x6 -> Off)<br/>
+                • <strong>KEYS 1 - 5</strong> : Switch Hotbar Items Instantly<br/>
+                • <strong>SPACEBAR / CTRL</strong> : Jump / Crouch to dodge humanoid fire<br/>
+                • <strong>HOLD SHIFT</strong> : Raise Energy Shield (Block All Damage)
             </div>
             <br/>
             <button class="start-btn" id="start-button">START GAME</button>
@@ -277,28 +200,31 @@
         <div id="vitals-container">
             <span>HP:</span>
             <div id="hp-bar-bg"><div id="hp-bar-fg"></div></div>
+            <span id="hp-text" style="font-size:14px; margin-left:5px;">1000/1000</span>
         </div>
         <div id="score-display">SCORE: <span id="score">0</span></div>
     </div>
 
     <script>
-        // --- Game Setup ---
+        // --- Game Parameters & Balancing Vectors ---
         let scene, camera, renderer;
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let isKneeling = false, isShielding = false;
         let canJump = false; 
         
-        let playerHP = 100;
+        let playerHP = 1000; // Increased to 1000HP
+        const MAX_PLAYER_HP = 1000;
         let score = 0;
         let prevTime = performance.now();
         const velocity = new THREE.Vector3();
         const direction = new THREE.Vector3();
         
         let targets = [];
-        let enemies = []; // Array tracking active aggressive shooter bots
+        let enemies = []; 
         
         const scoreElement = document.getElementById('score');
         const hpBarFg = document.getElementById('hp-bar-fg');
+        const hpText = document.getElementById('hp-text');
         const crosshair = document.getElementById('crosshair');
         const scopeOverlay = document.getElementById('scope-overlay');
         const scopeReadout = document.getElementById('scope-hud-readout');
@@ -317,7 +243,9 @@
         const KNEE_HEIGHT = 1;
         let currentBaseHeight = STAND_HEIGHT; 
 
-        // Weapon Configuration profiles including the newly introduced Knife melee weapon
+        // 15% Slowdown Modifier applied directly to objects
+        const OBJECT_SLOWDOWN_MODIFIER = 0.85; 
+
         const WEAPONS = {
             pistol: { name: "Laser Pistol", fireRate: 300, damage: 25, isAuto: false, spread: 0.005, color: 0x333333, length: 0.4, thickness: 0.08, range: 150 },
             autoRifle: { name: "Automatic Rifle", fireRate: 110, damage: 15, isAuto: true, spread: 0.04, color: 0x2b3d26, length: 0.7, thickness: 0.12, range: 150 },
@@ -331,7 +259,6 @@
             'Digit1': 'pistol', 'Digit2': 'autoRifle', 'Digit3': 'sniper', 'Digit4': 'shotgun', 'Digit5': 'knife'
         };
 
-        // --- Initialize ---
         init();
         animate();
 
@@ -364,9 +291,9 @@
 
             buildGunMesh();
 
-            // Populate Objects & Moving Enemy Drones
+            // Populate Objects & Moving Enemy Humanoids
             for (let i = 0; i < 15; i++) spawnTarget();
-            for (let i = 0; i < 6; i++) spawnEnemy();
+            for (let i = 0; i < 6; i++) spawnEnemyHumanoid();
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -480,14 +407,12 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        // --- Scope Dynamics ---
         function cycleScopeZoom() {
             zoomState = (zoomState + 1) % 4;
 
             if (zoomState > 0) {
                 camera.fov = ZOOM_FOVS[zoomState];
                 camera.updateProjectionMatrix();
-                
                 crosshair.style.opacity = '0';
                 scopeOverlay.style.display = 'block';
                 scopeReadout.innerText = ZOOM_LABELS[zoomState];
@@ -516,7 +441,6 @@
             }
         }
 
-        // --- Roblox Bar Selection Controller ---
         function selectWeapon(weaponType) {
             currentWeapon = weaponType;
             exitScope();
@@ -534,7 +458,6 @@
             const config = WEAPONS[currentWeapon];
 
             if (currentWeapon === 'knife') {
-                // Generate Melee Knife Mesh structural items
                 const bladeGeo = new THREE.BoxGeometry(0.02, 0.08, config.length);
                 const bladeMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.1 });
                 const blade = new THREE.Mesh(bladeGeo, bladeMat);
@@ -552,7 +475,6 @@
                 return;
             }
 
-            // Firearm structural assembly configuration setup
             const gunGeo = new THREE.BoxGeometry(config.thickness, config.thickness, config.length);
             const gunMat = new THREE.MeshStandardMaterial({ color: config.color, metalness: 0.7, roughness: 0.3 });
             const barrel = new THREE.Mesh(gunGeo, gunMat);
@@ -581,7 +503,6 @@
             resetGunInertialPosition();
         }
 
-        // --- Shooter Mechanics ---
         function shoot() {
             const now = performance.now();
             const config = WEAPONS[currentWeapon];
@@ -589,7 +510,6 @@
             if (now - lastShotTime < config.fireRate) return;
             lastShotTime = now;
 
-            // Attack Animation Trigger Matrices
             if (currentWeapon === 'knife') {
                 gunContainer.position.z -= 0.15;
                 gunContainer.rotation.x += 0.4;
@@ -612,7 +532,6 @@
                     processAttackHit(raycaster, config.range, config.damage);
                 }
             } else if (currentWeapon === 'knife') {
-                // Knife uses a straight short forward raycast with zero spread
                 raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
                 processAttackHit(raycaster, config.range, config.damage);
             } else {
@@ -629,59 +548,86 @@
         }
 
         function processAttackHit(raycaster, maxDistance, damage) {
-            // Target both passive shapes and patrolling enemies
+            // Check bounding hits against all targets and humanoid assemblies
             const clickableTargets = targets.map(t => t.userData.meshLink);
-            const clickableEnemies = enemies.map(e => e.userData.meshLink);
-            const allTargets = clickableTargets.concat(clickableEnemies);
+            const clickableEnemies = [];
+            
+            enemies.forEach(e => {
+                e.userData.hitboxes.forEach(box => clickableEnemies.push(box));
+            });
 
+            const allTargets = clickableTargets.concat(clickableEnemies);
             const intersects = raycaster.intersectObjects(allTargets);
 
             if (intersects.length > 0 && intersects[0].distance <= maxDistance) {
-                const hitMesh = intersects[0].object;
-                const parentGroup = hitMesh.parent; 
+                const hitObj = intersects[0].object;
+                let rootGroup = hitObj.parent;
+                
+                // Traverse upward if sub-limb hitbox mesh is struck
+                while (rootGroup && !rootGroup.userData.maxHealth) {
+                    rootGroup = rootGroup.parent;
+                }
 
-                if (parentGroup.userData.dead) return;
+                if (!rootGroup || rootGroup.userData.dead) return;
 
-                parentGroup.userData.health -= damage;
-                if (parentGroup.userData.health < 0) parentGroup.userData.health = 0;
+                rootGroup.userData.health -= damage;
+                if (rootGroup.userData.health < 0) rootGroup.userData.health = 0;
 
-                // Scaled Health Bar Adjustment Updates
-                const healthPercentage = parentGroup.userData.health / parentGroup.userData.maxHealth;
-                parentGroup.userData.healthBarForeground.scale.x = Math.max(0.0001, healthPercentage);
-                parentGroup.userData.healthBarForeground.position.x = - (1 - healthPercentage) * (parentGroup.userData.barWidth / 2);
+                const healthPercentage = rootGroup.userData.health / rootGroup.userData.maxHealth;
+                rootGroup.userData.healthBarForeground.scale.x = Math.max(0.0001, healthPercentage);
+                rootGroup.userData.healthBarForeground.position.x = - (1 - healthPercentage) * (rootGroup.userData.barWidth / 2);
 
-                hitMesh.material.color.setHex(0xff3333);
-                setTimeout(() => {
-                    if (!parentGroup.userData.dead) {
-                        hitMesh.material.color.setHex(parentGroup.userData.originalColor);
+                // Highlight structural segments flash red color on contact
+                if (rootGroup.userData.isEnemy) {
+                    rootGroup.userData.hitboxes.forEach(mesh => {
+                        if(mesh.material) mesh.material.color.setHex(0xff3333);
+                    });
+                    setTimeout(() => {
+                        if (!rootGroup.userData.dead) {
+                            rootGroup.userData.hitboxes.forEach(mesh => {
+                                if(mesh.material) mesh.material.color.setHex(mesh.userData.origCol || 0xcc0000);
+                            });
+                        }
+                    }, 100);
+                } else {
+                    hitObj.material.color.setHex(0xff3333);
+                    setTimeout(() => {
+                        if (!rootGroup.userData.dead) hitObj.material.color.setHex(rootGroup.userData.originalColor);
+                    }, 100);
+                }
+
+                if (rootGroup.userData.health <= 0) {
+                    rootGroup.userData.dead = true;
+                    
+                    if (rootGroup.userData.isEnemy) {
+                        rootGroup.userData.hitboxes.forEach(mesh => {
+                            if(mesh.material) {
+                                mesh.material.color.setHex(0xffffff);
+                                if(mesh.material.emissive) mesh.material.emissive.setHex(0xffffff);
+                            }
+                        });
+                    } else {
+                        hitObj.material.color.setHex(0xffffff);
+                        if(hitObj.material.emissive) hitObj.material.emissive.setHex(0xffffff);
                     }
-                }, 100);
-
-                if (parentGroup.userData.health <= 0) {
-                    parentGroup.userData.dead = true;
-                    hitMesh.material.color.setHex(0xffffff);
-                    if(hitMesh.material.emissive) hitMesh.material.emissive.setHex(0xffffff);
                     
                     setTimeout(() => {
-                        scene.remove(parentGroup);
-                        
-                        if (parentGroup.userData.isEnemy) {
-                            enemies = enemies.filter(e => e !== parentGroup);
-                            score += 30; // Extra reward for taking down aggressive bots
-                            spawnEnemy();
+                        scene.remove(rootGroup);
+                        if (rootGroup.userData.isEnemy) {
+                            enemies = enemies.filter(e => e !== rootGroup);
+                            score += 30;
+                            spawnEnemyHumanoid();
                         } else {
-                            targets = targets.filter(t => t !== parentGroup);
-                            score += (parentGroup.userData.maxHealth === 500) ? 50 : 10;
+                            targets = targets.filter(t => t !== rootGroup);
+                            score += (rootGroup.userData.maxHealth === 500) ? 50 : 10;
                             spawnTarget();
                         }
-                        
                         scoreElement.innerText = score;
                     }, 60);
                 }
             }
         }
 
-        // --- Spawn Entities (Targets & Shooters) ---
         function spawnTarget() {
             const targetGroup = new THREE.Group();
             const isBoss = Math.random() < 0.20;
@@ -700,45 +646,89 @@
             }
             
             let randomColor = isBoss ? 0xffaa00 : [0xff3333, 0x33ff33, 0x3333ff, 0xff5f9e][Math.floor(Math.random()*4)];
-
             const material = new THREE.MeshStandardMaterial({ color: randomColor, emissive: randomColor, emissiveIntensity: isBoss ? 0.3 : 0.1 });
             const targetMesh = new THREE.Mesh(geometry, material);
             targetGroup.add(targetMesh);
 
-            createEntityHealthBar(targetGroup, size, isBoss, maxHP, randomColor);
+            createEntityHealthBar(targetGroup, size, isBoss, maxHP, randomColor, false);
 
             targetGroup.position.set((Math.random() - 0.5) * 80, size + 1 + Math.random() * 8, (Math.random() - 0.5) * 80);
             scene.add(targetGroup);
             targets.push(targetGroup);
         }
 
-        function spawnEnemy() {
-            // Shooters are represented as high-visibility red security cylinders patrolling the map floor bounds
+        // --- Humanoid Detailed Assembler ---
+        function spawnEnemyHumanoid() {
             const enemyGroup = new THREE.Group();
             const maxHP = 120;
-            const size = 1.2;
+            const baseColor = 0xcc0000;
+            const limbMat = new THREE.MeshStandardMaterial({ color: baseColor, metalness: 0.6, roughness: 0.4 });
+            const jointMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 });
 
-            const geometry = new THREE.CylinderGeometry(0.4, 0.4, 2.0, 12);
-            const material = new THREE.MeshStandardMaterial({ color: 0xcc0000, metalness: 0.5, roughness: 0.5 });
-            const enemyMesh = new THREE.Mesh(geometry, material);
-            enemyMesh.position.y = 1.0; 
-            enemyGroup.add(enemyMesh);
+            const hitboxes = [];
 
-            // Give them a small visor indicator so players know which way they look
-            const visorGeo = new THREE.BoxGeometry(0.5, 0.2, 0.3);
+            // Torso / Chest Center
+            const torsoGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
+            const torso = new THREE.Mesh(torsoGeo, limbMat);
+            torso.position.y = 1.45;
+            torso.userData.origCol = baseColor;
+            enemyGroup.add(torso);
+            hitboxes.push(torso);
+
+            // Cranium Head
+            const headGeo = new THREE.SphereGeometry(0.24, 16, 16);
+            const head = new THREE.Mesh(headGeo, limbMat);
+            head.position.set(0, 2.05, 0);
+            head.userData.origCol = baseColor;
+            enemyGroup.add(head);
+            hitboxes.push(head);
+
+            // Security Electronic Visor Line
+            const visorGeo = new THREE.BoxGeometry(0.35, 0.08, 0.25);
             const visorMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
             const visor = new THREE.Mesh(visorGeo, visorMat);
-            visor.position.set(0, 1.4, -0.35);
+            visor.position.set(0, 2.08, -0.15);
             enemyGroup.add(visor);
+            hitboxes.push(visor);
 
-            createEntityHealthBar(enemyGroup, size, false, maxHP, 0xcc0000);
+            // Left / Right Limbs (Arms)
+            const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
+            const leftArm = new THREE.Mesh(armGeo, limbMat);
+            leftArm.position.set(-0.48, 1.45, 0);
+            leftArm.userData.origCol = baseColor;
+            enemyGroup.add(leftArm);
+            hitboxes.push(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, limbMat);
+            rightArm.position.set(0.48, 1.45, 0);
+            rightArm.userData.origCol = baseColor;
+            enemyGroup.add(rightArm);
+            hitboxes.push(rightArm);
+
+            // Left / Right Legs
+            const legGeo = new THREE.BoxGeometry(0.2, 0.8, 0.2);
+            const leftLeg = new THREE.Mesh(legGeo, limbMat);
+            leftLeg.position.set(-0.22, 0.6, 0);
+            leftLeg.userData.origCol = baseColor;
+            enemyGroup.add(leftLeg);
+            hitboxes.push(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeo, limbMat);
+            rightLeg.position.set(0.22, 0.6, 0);
+            rightLeg.userData.origCol = baseColor;
+            enemyGroup.add(rightLeg);
+            hitboxes.push(rightLeg);
+
+            createEntityHealthBar(enemyGroup, 1.2, false, maxHP, baseColor, true);
 
             enemyGroup.userData = Object.assign({}, enemyGroup.userData, {
                 isEnemy: true,
-                health: maxHP, maxHealth: maxHP, dead: false, meshLink: enemyMesh, originalColor: 0xcc0000,
+                health: maxHP, maxHealth: maxHP, dead: false, meshLink: torso, originalColor: baseColor,
+                hitboxes: hitboxes,
                 patrolTimer: 0,
                 moveDir: new THREE.Vector3((Math.random()-0.5), 0, (Math.random()-0.5)).normalize(),
-                lastShotTime: 0
+                lastShotTime: 0,
+                leftArmLink: leftArm, rightArmLink: rightArm, leftLegLink: leftLeg, rightLegLink: rightLeg
             });
 
             enemyGroup.position.set((Math.random() - 0.5) * 70, 0, (Math.random() - 0.5) * 70);
@@ -746,11 +736,11 @@
             enemies.push(enemyGroup);
         }
 
-        function createEntityHealthBar(group, size, isBoss, maxHP, originalColor) {
+        function createEntityHealthBar(group, size, isBoss, maxHP, originalColor, isEnemyHumanoid) {
             const barWidth = size * 1.5;
             const barHeight = isBoss ? 0.18 : 0.12;
             const healthBarGroup = new THREE.Group();
-            healthBarGroup.position.y = size + (isBoss ? 0.7 : 0.4); 
+            healthBarGroup.position.y = size + (isBoss ? 0.7 : 1.3); 
 
             const bgGeo = new THREE.PlaneGeometry(barWidth, barHeight);
             const bgMat = new THREE.MeshBasicMaterial({ color: 0x440000, side: THREE.DoubleSide });
@@ -766,30 +756,30 @@
             group.add(healthBarGroup);
 
             group.userData = {
-                health: maxHP, maxHealth: maxHP, dead: false, meshLink: group.children[0], originalColor: originalColor,
-                healthBarContainer: healthBarGroup, healthBarForeground: barFg, barWidth: barWidth,
-                spinX: (Math.random() - 0.5) * (isBoss ? 0.8 : 2), spinY: (Math.random() - 0.5) * (isBoss ? 0.8 : 2),
+                health: maxHP, maxHealth: maxHP, dead: false, meshLink: isEnemyHumanoid ? group.children[0] : group.children[0], 
+                originalColor: originalColor, healthBarContainer: healthBarGroup, healthBarForeground: barFg, barWidth: barWidth,
+                spinX: ((Math.random() - 0.5) * (isBoss ? 0.8 : 2)) * OBJECT_SLOWDOWN_MODIFIER, 
+                spinY: ((Math.random() - 0.5) * (isBoss ? 0.8 : 2)) * OBJECT_SLOWDOWN_MODIFIER,
                 floatOffset: Math.random() * 10
             };
         }
 
-        // --- Take Damage Tracker ---
         function damagePlayer(amount) {
-            // Complete damage immunity if user is active with Shift Kinetic Shield deployed
             if (isShielding) return; 
 
             playerHP -= amount;
             if (playerHP < 0) playerHP = 0;
             
-            // Render update out to vital meters frame blocks
-            hpBarFg.style.width = playerHP + "%";
+            hpBarFg.style.width = (playerHP / MAX_PLAYER_HP * 100) + "%";
+            hpText.innerText = playerHP + "/" + MAX_PLAYER_HP;
 
             if (playerHP <= 0) {
-                alert("GAME OVER! Your score: " + score);
-                playerHP = 100;
+                alert("GAME OVER! Your final score: " + score);
+                playerHP = MAX_PLAYER_HP;
                 score = 0;
                 scoreElement.innerText = score;
                 hpBarFg.style.width = "100%";
+                hpText.innerText = playerHP + "/" + MAX_PLAYER_HP;
                 camera.position.set(0, STAND_HEIGHT, 0);
             }
         }
@@ -800,20 +790,15 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- Engine Frame Loop ---
         function animate() {
             requestAnimationFrame(animate);
-
             const time = performance.now();
 
             if (document.pointerLockElement === document.body) {
                 const delta = (time - prevTime) / 1000;
 
-                if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) {
-                    shoot();
-                }
+                if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) shoot();
 
-                // Adjust positioning relative to Crouch Knee states
                 const targetBaseHeight = isKneeling ? KNEE_HEIGHT : STAND_HEIGHT;
                 currentBaseHeight += (targetBaseHeight - currentBaseHeight) * 12.0 * delta;
 
@@ -832,14 +817,15 @@
                 const camRight = new THREE.Vector3();
                 camRight.crossVectors(camYaw, camera.up).negate();
 
-                // Apply moving penalties when shielding or looking through scopes
+                // Applied a 20% Speed Boost to standard movement equations
+                let movementBaseSpeed = 48.0 * 1.20; 
                 let speedModifier = (zoomState > 0) ? 0.4 : 1.0;
                 if (isShielding) speedModifier *= 0.45; 
                 if (isKneeling) speedModifier *= 0.5;
                 if (!canJump) speedModifier *= 0.65; 
 
-                if (moveForward || moveBackward) velocity.addScaledVector(camYaw, direction.z * 40.0 * delta * speedModifier);
-                if (moveLeft || moveRight) velocity.addScaledVector(camRight, direction.x * 40.0 * delta * speedModifier);
+                if (moveForward || moveBackward) velocity.addScaledVector(camYaw, direction.z * movementBaseSpeed * delta * speedModifier);
+                if (moveLeft || moveRight) velocity.addScaledVector(camRight, direction.x * movementBaseSpeed * delta * speedModifier);
 
                 camera.position.x += velocity.x * delta;
                 camera.position.z += velocity.z * delta;
@@ -854,42 +840,47 @@
                 camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
                 camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
 
-                // Rotating Shapes Animation Tracker
+                // Rotating Targets (Slowed down 15% via OBJECT_SLOWDOWN_MODIFIER)
                 targets.forEach((targetGroup) => {
                     targetGroup.userData.meshLink.rotation.x += targetGroup.userData.spinX * delta;
                     targetGroup.userData.meshLink.rotation.y += targetGroup.userData.spinY * delta;
-                    targetGroup.position.y += Math.sin((time * 0.002) + targetGroup.userData.floatOffset) * 0.005;
+                    targetGroup.position.y += Math.sin((time * 0.002 * OBJECT_SLOWDOWN_MODIFIER) + targetGroup.userData.floatOffset) * 0.005;
                     targetGroup.userData.healthBarContainer.quaternion.copy(camera.quaternion);
                 });
 
-                // Patrolling Enemy Core Matrix Loop
+                // Humanoid Robot Patrolling AI & Limb Animations
                 enemies.forEach((enemy) => {
                     if (enemy.userData.dead) return;
 
-                    // Standard AI movement routine logic
                     enemy.userData.patrolTimer -= delta;
                     if(enemy.userData.patrolTimer <= 0) {
                         enemy.userData.patrolTimer = Math.random() * 3 + 2;
                         enemy.userData.moveDir.set((Math.random()-0.5), 0, (Math.random()-0.5)).normalize();
                     }
 
-                    enemy.position.addScaledVector(enemy.userData.moveDir, 5.0 * delta);
+                    // Humanoids walk forward
+                    enemy.position.addScaledVector(enemy.userData.moveDir, 4.5 * delta);
                     enemy.position.x = Math.max(-90, Math.min(90, enemy.position.x));
                     enemy.position.z = Math.max(-90, Math.min(90, enemy.position.z));
 
-                    // Face the user player
+                    // Limb swing simulation cycle based on stride speed
+                    const swingAngle = Math.sin(time * 0.007) * 0.4;
+                    enemy.userData.leftLegLink.rotation.x = swingAngle;
+                    enemy.userData.rightLegLink.rotation.x = -swingAngle;
+                    enemy.userData.leftArmLink.rotation.x = -swingAngle * 0.6;
+                    enemy.userData.rightArmLink.rotation.x = swingAngle * 0.6;
+
+                    // AI targeting loop sequence checks
                     enemy.lookAt(camera.position.x, enemy.position.y, camera.position.z);
                     enemy.userData.healthBarContainer.quaternion.copy(camera.quaternion);
 
-                    // Combat Targeting Checklist
                     const distanceToPlayer = enemy.position.distanceTo(camera.position);
                     if (distanceToPlayer < 45) {
-                        if (time - enemy.userData.lastShotTime > 1500) { // Fires every 1.5 seconds
+                        if (time - enemy.userData.lastShotTime > 1500) { 
                             enemy.userData.lastShotTime = time;
 
-                            // Create a temporary laser visual line matrix tracer
                             const laserPoints = [
-                                new THREE.Vector3(enemy.position.x, enemy.position.y + 1.2, enemy.position.z),
+                                new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z),
                                 new THREE.Vector3(camera.position.x, camera.position.y - 0.2, camera.position.z)
                             ];
                             const laserGeo = new THREE.BufferGeometry().setFromPoints(laserPoints);
@@ -898,15 +889,12 @@
                             scene.add(laserLine);
                             setTimeout(() => scene.remove(laserLine), 70);
 
-                            // Damage validation filter checks. Can defend via Jump, Crouch (Kneel), or holding Active Shield
                             const isEvadingViaJump = (!canJump && camera.position.y > (STAND_HEIGHT + 2.0));
                             
-                            if (isShielding) {
-                                // Blocked successfully!
-                            } else if (isKneeling || isEvadingViaJump) {
-                                // Player successfully avoided the hit box via movement skill mechanics!
+                            if (isShielding || isKneeling || isEvadingViaJump) {
+                                // Blocked or Evaded cleanly
                             } else {
-                                damagePlayer(10);
+                                damagePlayer(10); // 10 HP taken on hit
                             }
                         }
                     }
