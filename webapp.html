@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Mode Select & Settings Engine</title>
+    <title>3D WebGL FPS - Input & Movement Fix</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -210,17 +210,19 @@
     <script>
         // --- Game Framework Parameters ---
         let scene, camera, renderer;
-        let selectedMode = 'solo'; // Default to single player mode
+        let selectedMode = 'solo'; 
         let activeSimulationRunning = false;
         let settingsMenuOpen = false;
 
+        // --- FIXED: Explicit Global Movement Allocation Matrices ---
         const keysPressed = { KeyW: false, KeyA: false, KeyS: false, KeyD: false };
+        const direction = new THREE.Vector3(); 
+        const velocity = new THREE.Vector3();
+
         let isKneeling = false, isShielding = false, canJump = false; 
-        
         let playerHP = 1000, score = 0;
         const MAX_PLAYER_HP = 1000;
         let prevTime = performance.now();
-        const velocity = new THREE.Vector3();
         
         let targets = [], enemies = [], remotePlayers = {}; 
         let peer = null, dataConnections = [];
@@ -236,7 +238,7 @@
         const settingsOverlay = document.getElementById('settings-overlay');
 
         let gunContainer, isLeftMouseDown = false, lastShotTime = 0, zoomState = 0; 
-        const ZOOM_FOVS = [75, 45, 22.5, 12.5];
+        const ZOOM_FOVS = [75, 45, 22.5, 12.5], ZOOM_LABELS = ["", "[ 2X ZOOM ]", "[ 4X ZOOM ]", "[ 6X ZOOM ]"];
         const DEFAULT_FOV = 75, STAND_HEIGHT = 2, KNEE_HEIGHT = 1;
         let currentBaseHeight = STAND_HEIGHT; 
         const OBJECT_SLOWDOWN_MODIFIER = 0.85; 
@@ -282,7 +284,14 @@
                 launchGameModeDeployment();
             });
 
-            // Re-routing PointerLock events to intercept regular cancellations with Escape Panel triggers
+            // --- FIXED: Fail-Safe Backup Pointer Catch ---
+            // If the lock fails on setup, clicking anywhere inside the active simulation captures controls manually.
+            document.body.addEventListener('click', () => {
+                if(activeSimulationRunning && !settingsMenuOpen && document.pointerLockElement !== document.body) {
+                    document.body.requestPointerLock();
+                }
+            });
+
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
                     if (activeSimulationRunning) {
@@ -340,10 +349,8 @@
             activeSimulationRunning = true;
             settingsMenuOpen = false;
 
-            // Clear stale simulation vectors if existing
             clearSimulationEntities();
 
-            // Seed target matrix elements
             for (let i = 0; i < 15; i++) spawnTarget();
             for (let i = 0; i < 5; i++) spawnEnemyHumanoid();
 
@@ -364,7 +371,6 @@
         function openSettingsMenu() {
             settingsMenuOpen = true;
             settingsOverlay.style.display = 'flex';
-            // Release active input acceleration frames
             for (let k in keysPressed) keysPressed[k] = false;
             isLeftMouseDown = false;
         }
@@ -376,7 +382,6 @@
         }
 
         function endCurrentGameSession() {
-            // Drop parameters and teardown full visual arrays
             activeSimulationRunning = false;
             settingsMenuOpen = false;
             settingsOverlay.style.display = 'none';
@@ -386,7 +391,6 @@
             disconnectNetworkPointers();
             clearSimulationEntities();
             
-            // Re-initialize core local player values
             playerHP = MAX_PLAYER_HP;
             score = 0;
             scoreElement.innerText = score;
@@ -397,7 +401,6 @@
             camera.position.set(0, STAND_HEIGHT, 0);
             camera.rotation.set(0,0,0);
 
-            // Re-render primary UI menu screen
             document.getElementById('blocker').style.display = 'flex';
         }
 
@@ -478,7 +481,7 @@
             document.getElementById('net-status').innerText = "Offline";
         }
 
-        // --- Core Firearm Assemblies ---
+        // --- Weapon Handlers ---
         function cycleScopeZoom() {
             zoomState = (zoomState + 1) % 4;
             if (zoomState > 0) {
@@ -547,7 +550,7 @@
             }
         }
 
-        // --- Spawn Generation Mechanics ---
+        // --- Map Entities Generator ---
         function spawnTarget() {
             const targetGroup = new THREE.Group(); const size = Math.random() * 0.4 + 0.4;
             const targetMesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshStandardMaterial({ color: 0x3333ff })); targetGroup.add(targetMesh);
@@ -595,7 +598,7 @@
 
         function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
 
-        // --- Main Rendering Loop Function ---
+        // --- Main Frame Processing Render Loop ---
         function animateLoop() {
             requestAnimationFrame(animateLoop);
             const time = performance.now();
