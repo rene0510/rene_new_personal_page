@@ -128,7 +128,7 @@
         .logo-knife { width: 28px; height: 5px; background: #ddd; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -157,7 +157,7 @@
             <h2>OVERVIEWS OF THIS GAME</h2>
             
             <div class="settings-grid">
-                • <strong>W, A, S, D :</strong> Multi-Key Directional Engine Movement<br/>
+                • <strong>W, A, S, D :</strong> Free 360° Multi-Key Omni-Directional Vector Movement<br/>
                 • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation<br/>
                 • <strong>LEFT CLICK :</strong> Discharge Active Equipped Weapon Target Raycast<br/>
                 • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers
@@ -216,7 +216,6 @@
         let settingsMenuOpen = false;
 
         const keysPressed = { KeyW: false, KeyA: false, KeyS: false, KeyD: false };
-        const direction = new THREE.Vector3(); 
         const velocity = new THREE.Vector3();
 
         let isKneeling = false, isShielding = false, canJump = false; 
@@ -294,7 +293,6 @@
                 }
             });
 
-            // ESC Intercept -> Pulls up "Overviews of this Game"
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
                     if (activeSimulationRunning) {
@@ -359,7 +357,6 @@
             if (selectedMode === 'multi') {
                 document.getElementById('connect-panel-box').style.display = 'block';
                 initMultiplayerNetwork();
-                // Pop up the Overviews/Connection menu layout immediately
                 openSettingsMenu();
             } else {
                 document.getElementById('connect-panel-box').style.display = 'none';
@@ -409,40 +406,53 @@
             targets = []; enemies = []; remotePlayers = {};
         }
 
-        /* --- 6-Digit Numerical Code Allocation Engine --- */
         function generate6DigitNumericalString() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
+        /* --- STUN & Firewall Punch Configuration Updates --- */
         function initMultiplayerNetwork() {
             if (peer) return; 
             
             document.getElementById('my-code-label').innerText = "ALLOCATING...";
-            document.getElementById('net-status').innerText = "Status: Provisioning host gateway...";
+            document.getElementById('net-status').innerText = "Connecting to matchmaking servers...";
 
             const numericId = generate6DigitNumericalString();
             
+            // Explicit network configuration payload using high-availability public STUN lists 
+            // This ensures NAT configurations on separate home networks can talk to each other.
+            const p2pConfig = {
+                debug: 1,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                }
+            };
+
             try {
-                // Instantiating secure public signaling peer link
-                peer = new Peer(numericId);
+                peer = new Peer(numericId, p2pConfig);
 
                 peer.on('open', (id) => {
                     myNetworkId = id;
                     document.getElementById('my-code-label').innerText = id;
-                    document.getElementById('net-status').innerText = "Status: Open Room. Awaiting remote connection link.";
+                    document.getElementById('net-status').innerText = "Status: Open Room. Share this code with another device!";
                 });
 
                 peer.on('connection', (conn) => { 
                     setupNetworkDataChannels(conn); 
-                    // REFRESH ENGINE: Refresh with a brand new code once a user connects!
                     rotateHostRoomIdentity();
                 });
 
                 peer.on('error', (err) => {
-                    console.error("Peer allocation blocked:", err);
-                    document.getElementById('net-status').innerText = "Status: Route clash. Retrying fallback port allocation...";
+                    console.error("PeerJS Core Error Trace:", err.type, err);
                     if(err.type === 'unavailable-id') {
-                        setTimeout(initMultiplayerNetwork, 500);
+                        // Numeric room code clash, immediately cycle and re-request
+                        setTimeout(initMultiplayerNetwork, 300);
+                    } else {
+                        document.getElementById('net-status').innerText = `Status Error: ${err.type}`;
                     }
                 });
             } catch(e) {
@@ -453,15 +463,11 @@
         function rotateHostRoomIdentity() {
             if (!peer) return;
             const newNumericId = generate6DigitNumericalString();
-            
-            // Gracefully dismantle current signaling listener socket while keeping active open channels running
             peer.disconnect(); 
             
-            // Re-allocate signaling channel server under new numerical tracking identity for additional players
             setTimeout(() => {
                 if(!activeSimulationRunning || selectedMode !== 'multi') return;
                 peer.reconnect();
-                // Update signaling mapping reference points
                 peer._id = newNumericId;
                 peer.options.id = newNumericId;
                 myNetworkId = newNumericId;
@@ -472,15 +478,17 @@
         function connectToRoom() {
             const code = document.getElementById('join-code-input').value.trim();
             if(!code || !peer) return;
-            document.getElementById('net-status').innerText = `Status: Outbound link attempt routing to [${code}]...`;
-            const conn = peer.connect(code);
+            document.getElementById('net-status').innerText = `Status: Routing P2P handshake to room [${code}]...`;
+            
+            // Force reliable delivery option over WebRTC channels
+            const conn = peer.connect(code, { reliable: true });
             setupNetworkDataChannels(conn);
         }
 
         function setupNetworkDataChannels(conn) {
             conn.on('open', () => {
                 if(!dataConnections.find(c => c.peer === conn.peer)) dataConnections.push(conn);
-                document.getElementById('net-status').innerText = `Status: Connection Active. Active Peer Count: ${dataConnections.length}`;
+                document.getElementById('net-status').innerText = `Status: Peer Linked! Players online: ${dataConnections.length + 1}`;
                 conn.send({ type: 'handshake', id: myNetworkId });
             });
             conn.on('data', (data) => {
@@ -488,8 +496,11 @@
             });
             conn.on('close', () => {
                 dataConnections = dataConnections.filter(c => c.peer !== conn.peer);
-                document.getElementById('net-status').innerText = dataConnections.length > 0 ? `Status: Active Peer Count: ${dataConnections.length}` : "Status: Open Room. Awaiting remote connection link.";
+                document.getElementById('net-status').innerText = dataConnections.length > 0 ? `Players online: ${dataConnections.length + 1}` : "Status: Waiting for players to use your code.";
                 if(remotePlayers[conn.peer]) { scene.remove(remotePlayers[conn.peer].mesh); delete remotePlayers[conn.peer]; }
+            });
+            conn.on('error', (err) => {
+                document.getElementById('net-status').innerText = `Channel Error: ${err}`;
             });
         }
 
@@ -655,18 +666,35 @@
 
                 velocity.x -= velocity.x * 10.0 * delta; velocity.z -= velocity.z * 10.0 * delta; velocity.y -= 9.8 * 3.5 * delta; 
 
-                direction.z = Number(keysPressed.KeyW) - Number(keysPressed.KeyS);
-                direction.x = Number(keysPressed.KeyD) - Number(keysPressed.KeyA);
-                direction.normalize(); 
+                const moveVector = new THREE.Vector3(0, 0, 0);
+                
+                if (keysPressed.KeyW) moveVector.z -= 1;
+                if (keysPressed.KeyS) moveVector.z += 1;
+                if (keysPressed.KeyA) moveVector.x -= 1;
+                if (keysPressed.KeyD) moveVector.x += 1;
 
-                const camYaw = new THREE.Vector3(); camera.getWorldDirection(camYaw); camYaw.y = 0; camYaw.normalize();
-                const camRight = new THREE.Vector3().crossVectors(camYaw, camera.up).negate();
+                if (moveVector.lengthSq() > 0) {
+                    moveVector.normalize(); 
 
-                let movementSpeed = 57.6;
-                if (isShielding) movementSpeed *= 0.45; if (isKneeling) movementSpeed *= 0.5; if (!canJump) movementSpeed *= 0.65; 
+                    const camYaw = new THREE.Vector3(); 
+                    camera.getWorldDirection(camYaw); 
+                    camYaw.y = 0; 
+                    camYaw.normalize();
 
-                if (keysPressed.KeyW || keysPressed.KeyS) velocity.addScaledVector(camYaw, direction.z * movementSpeed * delta);
-                if (keysPressed.KeyA || keysPressed.KeyD) velocity.addScaledVector(camRight, direction.x * movementSpeed * delta);
+                    const camRight = new THREE.Vector3().crossVectors(camYaw, camera.up).negate();
+
+                    const translationTarget = new THREE.Vector3();
+                    translationTarget.addScaledVector(camYaw, -moveVector.z); 
+                    translationTarget.addScaledVector(camRight, moveVector.x); 
+                    translationTarget.normalize();
+
+                    let movementSpeed = 57.6;
+                    if (isShielding) movementSpeed *= 0.45; 
+                    if (isKneeling) movementSpeed *= 0.5; 
+                    if (!canJump) movementSpeed *= 0.65; 
+
+                    velocity.addScaledVector(translationTarget, movementSpeed * delta);
+                }
 
                 camera.position.x += velocity.x * delta; camera.position.z += velocity.z * delta; camera.position.y += velocity.y * delta; 
                 if (camera.position.y < currentBaseHeight) { velocity.y = 0; camera.position.y = currentBaseHeight; canJump = true; }
