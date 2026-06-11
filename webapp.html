@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - ESC Key Settings Engine</title>
+    <title>3D WebGL FPS - Overviews & Multiplayer Engine</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -12,7 +12,7 @@
             user-select: none;
         }
         
-        /* --- Core Menu & Blocker Overlays --- */
+        /* --- Pre-Game Blocker --- */
         #blocker {
             position: absolute; width: 100%; height: 100%;
             background-color: rgba(10, 10, 20, 0.9);
@@ -29,7 +29,6 @@
             font-size: 34px; text-shadow: 0 0 10px rgba(255, 95, 158, 0.5);
         }
         
-        /* --- Pre-Game Mode Selection Options --- */
         .mode-selection-container {
             display: flex; gap: 20px; justify-content: center; margin: 25px 0;
         }
@@ -52,51 +51,51 @@
         }
         .start-btn:hover { background: #ffffff; transform: scale(1.03); }
         
-        /* --- Escape (ESC) Settings Menu Panel --- */
+        /* --- Overviews Panel (Formerly System Settings) --- */
         #settings-overlay {
             display: none; position: absolute; width: 100%; height: 100%;
-            background-color: rgba(5, 5, 10, 0.85);
+            background-color: rgba(5, 5, 10, 0.9);
             justify-content: center; align-items: center; z-index: 9; color: #fff;
         }
         .settings-box {
-            background: #141423; border: 2px solid #00ffff; padding: 35px;
-            border-radius: 12px; max-width: 500px; width: 100%;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+            background: #141423; border: 2px solid #ff5f9e; padding: 35px;
+            border-radius: 12px; max-width: 550px; width: 100%;
+            box-shadow: 0 0 25px rgba(255, 95, 158, 0.15);
         }
-        .settings-box h2 { margin-top: 0; color: #00ffff; letter-spacing: 2px; border-bottom: 1px solid rgba(0,255,255,0.2); padding-bottom: 10px; }
-        .settings-grid { text-align: left; font-size: 14px; line-height: 1.8; margin: 20px 0; color: #ccc; }
+        .settings-box h2 { 
+            margin-top: 0; color: #ff5f9e; letter-spacing: 2px; 
+            border-bottom: 1px solid rgba(255,95,158,0.2); padding-bottom: 10px; 
+            text-shadow: 0 0 8px rgba(255,95,158,0.4);
+        }
+        .settings-grid { text-align: left; font-size: 14px; line-height: 1.7; margin: 15px 0; color: #ccc; }
         .settings-grid strong { color: #fff; }
         
-        .settings-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px; }
-        .btn-resume { background: #00ffff; color: #000; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        /* --- Integrated Connection Panel Style --- */
+        #connect-panel-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(0, 255, 255, 0.3);
+            border-radius: 6px; padding: 15px; margin: 20px 0; text-align: left;
+        }
+        #connect-panel-box h3 { margin: 0 0 10px 0; color: #00ffff; font-size: 15px; letter-spacing: 1px; }
+        .connect-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+        .connect-row input {
+            background: #222; border: 1px solid #ff5f9e; color: #fff;
+            padding: 6px 10px; border-radius: 4px; font-weight: bold; outline: none; width: 140px;
+        }
+        .connect-row button { 
+            background: #00ffff; color: #000; border: none; padding: 6px 14px; 
+            font-weight: bold; border-radius: 4px; cursor: pointer; transition: transform 0.1s;
+        }
+        .connect-row button:hover { transform: scale(1.02); }
+        .code-highlight { font-family: monospace; font-size: 18px; color: #00ffaa; font-weight: bold; letter-spacing: 1px; }
+        #net-status { font-size: 12px; color: #aaa; margin-top: 4px; display: block; }
+
+        .settings-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 20px; }
+        .btn-resume { background: #ff5f9e; color: #000; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .btn-endgame { background: #ff3333; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .btn-resume:hover, .btn-endgame:hover { opacity: 0.9; transform: scale(1.02); }
 
-        /* --- Multiplayer Connection HUD Tab Bar --- */
-        #multiplayer-tab {
-            display: none; position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(15, 15, 25, 0.9); border: 1px solid rgba(255, 95, 158, 0.4);
-            padding: 10px 20px; border-radius: 8px; z-index: 8;
-            gap: 12px; align-items: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        #multiplayer-tab input {
-            background: #222; border: 1px solid #ff5f9e; color: #fff;
-            padding: 6px 10px; border-radius: 4px; font-weight: bold; outline: none;
-            width: 130px; text-align: center;
-        }
-        #multiplayer-tab button { background: #ff5f9e; color: #000; border: none; padding: 6px 14px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        #net-status { font-size: 12px; color: #00ffaa; }
-
-        /* --- Room Code (Bottom Left) --- */
-        #room-code-display {
-            display: none; position: absolute; bottom: 20px; left: 20px;
-            background: rgba(0, 0, 0, 0.7); border-left: 4px solid #ff5f9e;
-            padding: 10px 15px; border-radius: 0 6px 6px 0;
-            color: #fff; font-family: monospace; font-size: 14px; z-index: 5;
-        }
-        #room-code-display span { color: #00ffff; font-weight: bold; }
-
-        /* --- Crosshair & HUD Lookups --- */
+        /* --- HUD Assets --- */
         #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); pointer-events: none; z-index: 5; }
         #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.8); }
         #crosshair::before { top: 4px; left: -5px; width: 20px; height: 2px; }
@@ -116,7 +115,6 @@
         #hp-bar-fg { width: 100%; height: 100%; background: #ff3333; transition: width 0.05s ease; }
         #score-display { font-size: 24px; text-shadow: 2px 2px 4px #000; }
 
-        /* --- Hotbar --- */
         #roblox-hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0, 0, 0, 0.6); padding: 6px; border-radius: 8px; z-index: 5; }
         .hotbar-slot { width: 85px; height: 80px; background: rgba(35, 35, 45, 0.85); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #eee; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 6px 2px; box-sizing: border-box; }
         .hotbar-slot.active { background: rgba(255, 95, 158, 0.25); border: 2px solid #ff5f9e; box-shadow: 0 0 12px rgba(255, 95, 158, 0.5); color: #fff; }
@@ -130,7 +128,7 @@
         .logo-knife { width: 28px; height: 5px; background: #ddd; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -156,31 +154,35 @@
 
     <div id="settings-overlay">
         <div class="settings-box">
-            <h2>SYSTEM SETTINGS</h2>
+            <h2>OVERVIEWS OF THIS GAME</h2>
+            
             <div class="settings-grid">
-                • <strong>W, A, S, D :</strong> Multi-Key Diagonal Movement Tracker<br/>
-                • <strong>MOUSE LOOK :</strong> Aim Camera Orientation<br/>
-                • <strong>LEFT CLICK :</strong> Fire Equipped Kinetic Weaponry<br/>
-                • <strong>RIGHT CLICK :</strong> Cycle Active Scope Zoom Optics<br/>
-                • <strong>KEYS 1 - 5 :</strong> Hotbar Weapon Swapping Selection<br/>
-                • <strong>SPACEBAR / CTRL :</strong> Vertical Jump / Tactical Kneel Crouching<br/>
-                • <strong>HOLD SHIFT :</strong> Stationary Energy Shield Absorb Barrier
+                • <strong>W, A, S, D :</strong> Multi-Key Directional Engine Movement<br/>
+                • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation<br/>
+                • <strong>LEFT CLICK :</strong> Discharge Active Equipped Weapon Target Raycast<br/>
+                • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers
             </div>
+
+            <div id="connect-panel-box">
+                <h3>CONNECT PANEL</h3>
+                <div class="connect-row">
+                    <span>Your Room Code:</span>
+                    <span id="my-code-label" class="code-highlight">GENERATING...</span>
+                </div>
+                <div class="connect-row">
+                    <span>Link Remote Peer:</span>
+                    <input type="text" id="join-code-input" placeholder="6-Digit Number" maxlength="6">
+                    <button onclick="connectToRoom()">Link Room</button>
+                </div>
+                <span id="net-status">Status: Offline Connection</span>
+            </div>
+
             <div class="settings-actions">
                 <button class="btn-resume" onclick="resumeSimulation()">RESUME GAME</button>
                 <button class="btn-endgame" onclick="endCurrentGameSession()">END GAME</button>
             </div>
         </div>
     </div>
-
-    <div id="multiplayer-tab">
-        <span>Connect Panel:</span>
-        <input type="text" id="join-code-input" placeholder="Enter Room ID">
-        <button onclick="connectToRoom()">Link Room</button>
-        <span id="net-status">Offline</span>
-    </div>
-
-    <div id="room-code-display">ROOM ID: <span id="my-code-label">NONE</span></div>
 
     <div id="roblox-hotbar">
         <div class="hotbar-slot active" id="slot-pistol" onclick="selectWeapon('pistol')"><span class="slot-number">1</span><div class="weapon-logo"><div class="logo-pistol"></div></div><span class="slot-name">Laser Pistol</span></div>
@@ -208,7 +210,6 @@
     </div>
 
     <script>
-        // --- Game Framework Parameters ---
         let scene, camera, renderer;
         let selectedMode = 'solo'; 
         let activeSimulationRunning = false;
@@ -252,8 +253,12 @@
         let currentWeapon = 'pistol';
         const WEAPON_KEYS = { 'Digit1': 'pistol', 'Digit2': 'autoRifle', 'Digit3': 'sniper', 'Digit4': 'shotgun', 'Digit5': 'knife' };
 
-        initEngineBase();
-        animateLoop();
+        try {
+            initEngineBase();
+            animateLoop();
+        } catch (e) {
+            console.error("Runtime Exception Trace:", e);
+        }
 
         function initEngineBase() {
             scene = new THREE.Scene();
@@ -289,8 +294,7 @@
                 }
             });
 
-            // --- CRITICAL ESC KEY LISTENER ENGINE ---
-            // Whenever pointer lock is lost (which happens when the user hits 'ESC'), open the Settings screen!
+            // ESC Intercept -> Pulls up "Overviews of this Game"
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
                     if (activeSimulationRunning) {
@@ -335,7 +339,6 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        // --- Match Deployment Initializers ---
         function setMatchMode(mode) {
             selectedMode = mode;
             document.getElementById('card-solo').classList.remove('selected');
@@ -354,19 +357,17 @@
             for (let i = 0; i < 5; i++) spawnEnemyHumanoid();
 
             if (selectedMode === 'multi') {
-                document.getElementById('multiplayer-tab').style.display = 'flex';
-                document.getElementById('room-code-display').style.display = 'block';
-                if (!peer) initMultiplayerNetwork();
+                document.getElementById('connect-panel-box').style.display = 'block';
+                initMultiplayerNetwork();
+                // Pop up the Overviews/Connection menu layout immediately
+                openSettingsMenu();
             } else {
-                document.getElementById('multiplayer-tab').style.display = 'none';
-                document.getElementById('room-code-display').style.display = 'none';
+                document.getElementById('connect-panel-box').style.display = 'none';
                 disconnectNetworkPointers();
+                document.body.requestPointerLock();
             }
-
-            document.body.requestPointerLock();
         }
 
-        // --- Settings Panel Operations ---
         function openSettingsMenu() {
             settingsMenuOpen = true;
             settingsOverlay.style.display = 'flex';
@@ -384,8 +385,6 @@
             activeSimulationRunning = false;
             settingsMenuOpen = false;
             settingsOverlay.style.display = 'none';
-            document.getElementById('multiplayer-tab').style.display = 'none';
-            document.getElementById('room-code-display').style.display = 'none';
             
             disconnectNetworkPointers();
             clearSimulationEntities();
@@ -410,23 +409,70 @@
             targets = []; enemies = []; remotePlayers = {};
         }
 
-        // --- Multiplayer Logic Structures ---
-        function initMultiplayerNetwork() {
-            const randomizedRoomId = "CYBER-" + Math.floor(1000 + Math.random() * 9000);
-            peer = new Peer(randomizedRoomId);
+        /* --- 6-Digit Numerical Code Allocation Engine --- */
+        function generate6DigitNumericalString() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
 
-            peer.on('open', (id) => {
-                myNetworkId = id;
-                document.getElementById('my-code-label').innerText = id;
-                document.getElementById('net-status').innerText = "Host Node Online";
-            });
-            peer.on('connection', (conn) => { setupNetworkDataChannels(conn); });
+        function initMultiplayerNetwork() {
+            if (peer) return; 
+            
+            document.getElementById('my-code-label').innerText = "ALLOCATING...";
+            document.getElementById('net-status').innerText = "Status: Provisioning host gateway...";
+
+            const numericId = generate6DigitNumericalString();
+            
+            try {
+                // Instantiating secure public signaling peer link
+                peer = new Peer(numericId);
+
+                peer.on('open', (id) => {
+                    myNetworkId = id;
+                    document.getElementById('my-code-label').innerText = id;
+                    document.getElementById('net-status').innerText = "Status: Open Room. Awaiting remote connection link.";
+                });
+
+                peer.on('connection', (conn) => { 
+                    setupNetworkDataChannels(conn); 
+                    // REFRESH ENGINE: Refresh with a brand new code once a user connects!
+                    rotateHostRoomIdentity();
+                });
+
+                peer.on('error', (err) => {
+                    console.error("Peer allocation blocked:", err);
+                    document.getElementById('net-status').innerText = "Status: Route clash. Retrying fallback port allocation...";
+                    if(err.type === 'unavailable-id') {
+                        setTimeout(initMultiplayerNetwork, 500);
+                    }
+                });
+            } catch(e) {
+                document.getElementById('net-status').innerText = "Status: Engine initialization fault.";
+            }
+        }
+
+        function rotateHostRoomIdentity() {
+            if (!peer) return;
+            const newNumericId = generate6DigitNumericalString();
+            
+            // Gracefully dismantle current signaling listener socket while keeping active open channels running
+            peer.disconnect(); 
+            
+            // Re-allocate signaling channel server under new numerical tracking identity for additional players
+            setTimeout(() => {
+                if(!activeSimulationRunning || selectedMode !== 'multi') return;
+                peer.reconnect();
+                // Update signaling mapping reference points
+                peer._id = newNumericId;
+                peer.options.id = newNumericId;
+                myNetworkId = newNumericId;
+                document.getElementById('my-code-label').innerText = newNumericId;
+            }, 800);
         }
 
         function connectToRoom() {
             const code = document.getElementById('join-code-input').value.trim();
             if(!code || !peer) return;
-            document.getElementById('net-status').innerText = "Linking...";
+            document.getElementById('net-status').innerText = `Status: Outbound link attempt routing to [${code}]...`;
             const conn = peer.connect(code);
             setupNetworkDataChannels(conn);
         }
@@ -434,7 +480,7 @@
         function setupNetworkDataChannels(conn) {
             conn.on('open', () => {
                 if(!dataConnections.find(c => c.peer === conn.peer)) dataConnections.push(conn);
-                document.getElementById('net-status').innerText = `Peers Live: ${dataConnections.length}`;
+                document.getElementById('net-status').innerText = `Status: Connection Active. Active Peer Count: ${dataConnections.length}`;
                 conn.send({ type: 'handshake', id: myNetworkId });
             });
             conn.on('data', (data) => {
@@ -442,7 +488,7 @@
             });
             conn.on('close', () => {
                 dataConnections = dataConnections.filter(c => c.peer !== conn.peer);
-                document.getElementById('net-status').innerText = dataConnections.length > 0 ? `Peers Live: ${dataConnections.length}` : "Host Node Online";
+                document.getElementById('net-status').innerText = dataConnections.length > 0 ? `Status: Active Peer Count: ${dataConnections.length}` : "Status: Open Room. Awaiting remote connection link.";
                 if(remotePlayers[conn.peer]) { scene.remove(remotePlayers[conn.peer].mesh); delete remotePlayers[conn.peer]; }
             });
         }
@@ -476,11 +522,10 @@
             dataConnections.forEach(c => c.close());
             dataConnections = [];
             if(peer) { peer.destroy(); peer = null; }
-            document.getElementById('my-code-label').innerText = "NONE";
-            document.getElementById('net-status').innerText = "Offline";
+            document.getElementById('my-code-label').innerText = "GENERATING...";
+            document.getElementById('net-status').innerText = "Status: Offline Connection";
         }
 
-        // --- Weapon Handlers ---
         function cycleScopeZoom() {
             zoomState = (zoomState + 1) % 4;
             if (zoomState > 0) {
@@ -504,7 +549,8 @@
         function selectWeapon(weaponType) {
             currentWeapon = weaponType; exitScope();
             document.querySelectorAll('.hotbar-slot').forEach(slot => slot.classList.remove('active'));
-            document.getElementById(`slot-${weaponType}`).classList.add('active');
+            const element = document.getElementById(`slot-${weaponType}`);
+            if(element) element.classList.add('active');
             buildGunMesh();
         }
 
@@ -549,7 +595,6 @@
             }
         }
 
-        // --- Map Entities Generator ---
         function spawnTarget() {
             const targetGroup = new THREE.Group(); const size = Math.random() * 0.4 + 0.4;
             const targetMesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshStandardMaterial({ color: 0x3333ff })); targetGroup.add(targetMesh);
@@ -597,7 +642,6 @@
 
         function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
 
-        // --- Main Frame Processing Render Loop ---
         function animateLoop() {
             requestAnimationFrame(animateLoop);
             const time = performance.now();
@@ -660,7 +704,9 @@
                 });
             }
             prevTime = time;
-            renderer.render(scene, camera);
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
         }
     </script>
 </body>
