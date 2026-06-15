@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Arsenal Arena Edition</title>
+    <title>3D WebGL FPS - Arsenal Arena Pro</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -15,7 +15,7 @@
         /* --- Pre-Game Blocker --- */
         #blocker {
             position: absolute; width: 100%; height: 100%;
-            background-color: rgba(10, 10, 20, 0.9);
+            background-color: rgba(10, 10, 20, 0.95);
             display: flex; justify-content: center; align-items: center;
             color: #fff; text-align: center; z-index: 10;
         }
@@ -23,6 +23,7 @@
             background: rgba(20, 20, 35, 0.95); border: 2px solid #ff5f9e;
             padding: 40px; border-radius: 15px;
             box-shadow: 0 0 30px rgba(255, 95, 158, 0.2); max-width: 540px;
+            width: 100%; box-sizing: border-box;
         }
         #menu-panel h1 {
             margin-top: 0; color: #ff5f9e; letter-spacing: 4px;
@@ -51,6 +52,31 @@
         }
         .start-btn:hover { background: #ffffff; transform: scale(1.03); }
         
+        /* --- Network Hub Panel --- */
+        #network-setup-box {
+            display: none; background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(0, 255, 255, 0.3);
+            border-radius: 6px; padding: 15px; margin: 20px 0; text-align: left;
+        }
+        #network-setup-box h3 { margin: 0 0 12px 0; color: #00ffff; font-size: 15px; letter-spacing: 1px; }
+        .net-action-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .net-action-row button {
+            background: #222; border: 1px solid #00ffff; color: #00ffff;
+            padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;
+        }
+        .net-action-row button:hover { background: rgba(0, 255, 255, 0.1); }
+        .connect-input-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .connect-input-row input {
+            background: #111; border: 1px solid #ff5f9e; color: #fff;
+            padding: 8px; border-radius: 4px; font-weight: bold; outline: none; width: 140px; text-align: center; font-size: 16px;
+        }
+        .connect-input-row button {
+            background: #ff5f9e; color: #000; border: none; padding: 8px 16px;
+            font-weight: bold; border-radius: 4px; cursor: pointer;
+        }
+        .code-highlight { font-family: monospace; font-size: 20px; color: #00ffaa; font-weight: bold; letter-spacing: 1px; }
+        #net-status-label { font-size: 12px; color: #ccc; margin-top: 8px; display: block; }
+
         /* --- Overviews Panel --- */
         #settings-overlay {
             display: none; position: absolute; width: 100%; height: 100%;
@@ -70,25 +96,6 @@
         .settings-grid { text-align: left; font-size: 14px; line-height: 1.7; margin: 15px 0; color: #ccc; }
         .settings-grid strong { color: #fff; }
         
-        #connect-panel-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px dashed rgba(0, 255, 255, 0.3);
-            border-radius: 6px; padding: 15px; margin: 20px 0; text-align: left;
-        }
-        #connect-panel-box h3 { margin: 0 0 10px 0; color: #00ffff; font-size: 15px; letter-spacing: 1px; }
-        .connect-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
-        .connect-row input {
-            background: #222; border: 1px solid #ff5f9e; color: #fff;
-            padding: 6px 10px; border-radius: 4px; font-weight: bold; outline: none; width: 140px;
-        }
-        .connect-row button { 
-            background: #00ffff; color: #000; border: none; padding: 6px 14px; 
-            font-weight: bold; border-radius: 4px; cursor: pointer; transition: transform 0.1s;
-        }
-        .connect-row button:hover { transform: scale(1.02); }
-        .code-highlight { font-family: monospace; font-size: 18px; color: #00ffaa; font-weight: bold; letter-spacing: 1px; }
-        #net-status { font-size: 12px; color: #aaa; margin-top: 4px; display: block; }
-
         .settings-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 20px; }
         .btn-resume { background: #ff5f9e; color: #000; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .btn-endgame { background: #ff3333; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
@@ -114,7 +121,11 @@
         #vitals-container { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         #hp-bar-bg { width: 250px; height: 18px; background: rgba(100,0,0,0.5); border: 2px solid #ff3333; border-radius: 3px; overflow: hidden; }
         #hp-bar-fg { width: 100%; height: 100%; background: #ff3333; transition: width 0.05s ease; }
-        #score-display { font-size: 24px; text-shadow: 2px 2px 4px #000; }
+        #score-display { font-size: 24px; text-shadow: 2px 2px 4px #000; margin-top: 5px; }
+        
+        /* Tactical Ammo Display Counters */
+        #ammo-display { font-size: 26px; color: #00ffff; text-shadow: 2px 2px 4px #000; margin-top: 5px; letter-spacing: 1px; }
+        #reload-warning { display: none; position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); color: #ff3333; font-size: 20px; font-weight: bold; text-shadow: 0 0 8px #000; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff3333; z-index: 5; }
 
         #roblox-hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0, 0, 0, 0.6); padding: 6px; border-radius: 8px; z-index: 5; }
         .hotbar-slot { width: 85px; height: 80px; background: rgba(35, 35, 45, 0.85); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #eee; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 6px 2px; box-sizing: border-box; }
@@ -133,6 +144,7 @@
 </head>
 <body>
 
+    <!-- Main Game Menu Selector -->
     <div id="blocker">
         <div id="menu-panel">
             <h1>CYBER RANGE 3D</h1>
@@ -145,37 +157,43 @@
                 </div>
                 <div class="mode-card" id="card-multi" onclick="setMatchMode('multi')">
                     <h3>MULTIPLAYER</h3>
-                    <p>Spawn an open network room channel or connect to live peers.</p>
+                    <p>Host or Link directly to a friend using direct WebRTC keys.</p>
                 </div>
+            </div>
+
+            <!-- Dedicated Multi-Connection Management Hub Box -->
+            <div id="network-setup-box">
+                <h3>TACTICAL MULTIPLAYER HUB</h3>
+                <div class="net-action-row">
+                    <button type="button" onclick="initializeHostServerInstance()">1. CREATE HOST ROOM</button>
+                </div>
+                <div style="font-size: 13px; margin-bottom: 10px;">
+                    Room Key ID: <span id="room-code-display" class="code-highlight">--- ---</span>
+                </div>
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
+                <div class="connect-input-row">
+                    <span>Or Join Friend:</span>
+                    <input type="text" id="target-room-input" placeholder="6-Digit Code" maxlength="6">
+                    <button type="button" onclick="joinRemoteHostInstance()">LINK UP</button>
+                </div>
+                <span id="net-status-label">Status: System Offline</span>
             </div>
 
             <button class="start-btn" id="start-button">START PLAYING</button>
         </div>
     </div>
 
+    <!-- Overviews Overlay -->
     <div id="settings-overlay">
         <div class="settings-box">
             <h2>OVERVIEWS OF THIS GAME</h2>
             
             <div class="settings-grid">
-                • <strong>W, A, S, D :</strong> Free 360° Multi-Key Omni-Directional Vector Movement<br/>
+                • <strong>W, A, S, D :</strong> Free 360° Multi-Key Omni-Directional Vector Movement (+20% Buffed)<br/>
                 • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation<br/>
                 • <strong>LEFT CLICK :</strong> Discharge Active Equipped Weapon Target Raycast<br/>
-                • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers
-            </div>
-
-            <div id="connect-panel-box">
-                <h3>CONNECT PANEL</h3>
-                <div class="connect-row">
-                    <span>Your Room Code:</span>
-                    <span id="my-code-label" class="code-highlight">GENERATING...</span>
-                </div>
-                <div class="connect-row">
-                    <span>Link Remote Peer:</span>
-                    <input type="text" id="join-code-input" placeholder="6-Digit Number" maxlength="6">
-                    <button onclick="connectToRoom()">Link Room</button>
-                </div>
-                <span id="net-status">Status: Offline Connection</span>
+                • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers<br/>
+                • <strong>KEY [R] :</strong> Insert Fresh Magazine (Max 10 Bullets Core Limit)
             </div>
 
             <div class="settings-actions">
@@ -185,6 +203,7 @@
         </div>
     </div>
 
+    <!-- Weapon Hotbar -->
     <div id="roblox-hotbar">
         <div class="hotbar-slot active" id="slot-pistol" onclick="selectWeapon('pistol')"><span class="slot-number">1</span><div class="weapon-logo"><div class="logo-pistol"></div></div><span class="slot-name">Laser Pistol</span></div>
         <div class="hotbar-slot" id="slot-autoRifle" onclick="selectWeapon('autoRifle')"><span class="slot-number">2</span><div class="weapon-logo"><div class="logo-rifle"></div></div><span class="slot-name">Auto Rifle</span></div>
@@ -194,6 +213,7 @@
     </div>
 
     <div id="crosshair"></div>
+    <div id="reload-warning">PRESS 'R' TO RELOAD</div>
     <div id="shield-overlay"></div>
     <div id="scope-overlay">
         <div id="scope-reticle-h"></div><div id="scope-reticle-v"></div>
@@ -208,6 +228,7 @@
             <span id="hp-text" style="font-size:14px; margin-left:5px;">1000/1000</span>
         </div>
         <div id="score-display">SCORE: <span id="score">0</span></div>
+        <div id="ammo-display">AMMO: <span id="ammo-count">10</span> / 10</div>
     </div>
 
     <script>
@@ -224,16 +245,24 @@
         const MAX_PLAYER_HP = 1000;
         let prevTime = performance.now();
         
-        // Explicitly running variable tracking node for health ticks
         let lastRegenTime = performance.now(); 
         
         let targets = [], enemies = [], remotePlayers = {}, obstacles = []; 
         let peer = null, dataConnections = [];
         let myNetworkId = "";
 
+        // Ammo state definitions
+        const MAX_AMMO = 10;
+        let currentAmmo = 10;
+        let isReloading = false;
+        let reloadStartTime = 0;
+        const RELOAD_DURATION = 1200; // 1.2 Seconds Tactical Cycle
+
         const scoreElement = document.getElementById('score');
         const hpBarFg = document.getElementById('hp-bar-fg');
         const hpText = document.getElementById('hp-text');
+        const ammoCountElement = document.getElementById('ammo-count');
+        const reloadWarning = document.getElementById('reload-warning');
         const crosshair = document.getElementById('crosshair');
         const scopeOverlay = document.getElementById('scope-overlay');
         const scopeReadout = document.getElementById('scope-hud-readout');
@@ -274,7 +303,6 @@
             const ambientLight = new THREE.AmbientLight(0x555555); scene.add(ambientLight);
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.9); dirLight.position.set(20, 40, 20); scene.add(dirLight);
 
-            // Construct Arsenal Base Mapping Matrix
             buildArsenalWarehouseEnvironment();
 
             gunContainer = new THREE.Group();
@@ -297,7 +325,6 @@
                 }
             });
 
-            document.pointerLockElement = null;
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement !== document.body) {
                     if (activeSimulationRunning) {
@@ -328,6 +355,7 @@
                 if (!activeSimulationRunning || settingsMenuOpen) return;
                 if (WEAPON_KEYS[e.code]) { selectWeapon(WEAPON_KEYS[e.code]); return; }
                 if (e.code in keysPressed) { keysPressed[e.code] = true; return; }
+                if (e.code === 'KeyR') { initiateManualReloadCycle(); return; }
                 if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { isShielding = true; shieldOverlay.style.display = 'block'; exitScope(); return; }
                 if (e.code === 'ControlLeft' || e.code === 'ControlRight') { e.preventDefault(); isKneeling = true; return; }
                 if (e.code === 'Space') { e.preventDefault(); if (canJump && !isKneeling) { velocity.y = 12.0; canJump = false; } }
@@ -342,21 +370,17 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        /* --- New Dedicated Arsenal Background Generation --- */
         function buildArsenalWarehouseEnvironment() {
-            // Dark Industrial Plates
             const floorGeo = new THREE.PlaneGeometry(160, 160);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x1c1c24, roughness: 0.4, metalness: 0.6 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotateX(-Math.PI / 2);
             scene.add(floor);
 
-            // Tactical Grid Layout Overlays
             const gridHelper = new THREE.GridHelper(160, 40, 0xff7700, 0x2b2b3a);
             gridHelper.position.y = 0.01;
             scene.add(gridHelper);
 
-            // Outermost Security Perimeter Walls
             const boundaryWallMat = new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.8 });
             
             const wallN = new THREE.Mesh(new THREE.BoxGeometry(160, 14, 2), boundaryWallMat);
@@ -371,7 +395,6 @@
             const wallW = new THREE.Mesh(new THREE.BoxGeometry(2, 14, 160), boundaryWallMat);
             wallW.position.set(-80, 7, 0); scene.add(wallW);
 
-            // Populate Defensive Obstacles 
             generateTacticalCrate(12, 6, 12, -25, 3, -20, 0x3a4250);
             generateTacticalCrate(8, 8, 8, 30, 4, -40, 0x282c34);
             generateTacticalCrate(16, 5, 6, -35, 2.5, 30, 0x4b5263);
@@ -387,9 +410,8 @@
             const crate = new THREE.Mesh(crateGeo, crateMat);
             crate.position.set(x, y, z);
             scene.add(crate);
-            obstacles.push(crate); // Store mapping to trigger physical line-of-sight blocks
+            obstacles.push(crate); 
 
-            // Add fluorescent neon strip border details to ensure visibility
             const lineGeo = new THREE.BoxGeometry(w + 0.05, 0.2, d + 0.05);
             const lineMat = new THREE.MeshBasicMaterial({ color: 0xff5f00 });
             const lineMesh = new THREE.Mesh(lineGeo, lineMat);
@@ -402,6 +424,115 @@
             document.getElementById('card-solo').classList.remove('selected');
             document.getElementById('card-multi').classList.remove('selected');
             document.getElementById(`card-${mode}`).classList.add('selected');
+            
+            if (mode === 'multi') {
+                document.getElementById('network-setup-box').style.display = 'block';
+            } else {
+                document.getElementById('network-setup-box').style.display = 'none';
+            }
+        }
+
+        function generate6DigitNumericalString() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        /* --- FIXED CLEAN-HANDSHAKE PEER MULTIPLAYER ENGINE --- */
+        function initializeHostServerInstance() {
+            if (peer) peer.destroy();
+            
+            document.getElementById('room-code-display').innerText = "ALLOCATING...";
+            document.getElementById('net-status-label').innerText = "Registering room id with connection cloud...";
+
+            const numericId = generate6DigitNumericalString();
+            const p2pConfig = {
+                debug: 1,
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+            };
+
+            peer = new Peer(numericId, p2pConfig);
+
+            peer.on('open', (id) => {
+                myNetworkId = id;
+                document.getElementById('room-code-display').innerText = id;
+                document.getElementById('net-status-label').innerText = "Room ready. Give your friend your Code ID!";
+            });
+
+            peer.on('connection', (conn) => {
+                setupNetworkDataChannels(conn);
+            });
+
+            peer.on('error', (err) => {
+                document.getElementById('net-status-label').innerText = `Host Error: ${err.type}`;
+            });
+        }
+
+        function joinRemoteHostInstance() {
+            const targetCode = document.getElementById('target-room-input').value.trim();
+            if (!targetCode) { alert("Please type a valid 6-Digit code!"); return; }
+            
+            if (!peer) {
+                const numericId = generate6DigitNumericalString();
+                peer = new Peer(numericId, { debug: 1, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
+                peer.on('open', () => executeOutboundRouting(targetCode));
+                peer.on('connection', (conn) => setupNetworkDataChannels(conn));
+            } else {
+                executeOutboundRouting(targetCode);
+            }
+        }
+
+        function executeOutboundRouting(targetCode) {
+            document.getElementById('net-status-label').innerText = `Linking handshake lines to: ${targetCode}`;
+            const conn = peer.connect(targetCode, { reliable: true });
+            setupNetworkDataChannels(conn);
+        }
+
+        function setupNetworkDataChannels(conn) {
+            conn.on('open', () => {
+                if(!dataConnections.find(c => c.peer === conn.peer)) dataConnections.push(conn);
+                document.getElementById('net-status-label').innerText = `Link Success! Active Peers count: ${dataConnections.length}`;
+                conn.send({ type: 'handshake', id: peer.id });
+            });
+            conn.on('data', (data) => {
+                if(data.type === 'movement') syncRemoteClientData(data);
+            });
+            conn.on('close', () => {
+                dataConnections = dataConnections.filter(c => c.peer !== conn.peer);
+                document.getElementById('net-status-label').innerText = `Peer split room. Active connections remaining: ${dataConnections.length}`;
+                if(remotePlayers[conn.peer]) { scene.remove(remotePlayers[conn.peer].mesh); delete remotePlayers[conn.peer]; }
+            });
+        }
+
+        function broadcastMovementPacket() {
+            if(dataConnections.length === 0 || !peer) return;
+            const payload = {
+                type: 'movement', id: peer.id,
+                x: camera.position.x, y: camera.position.y, z: camera.position.z,
+                rotY: camera.rotation.y, isKneeling: isKneeling
+            };
+            dataConnections.forEach(conn => { if(conn.open) conn.send(payload); });
+        }
+
+        function syncRemoteClientData(data) {
+            if(!remotePlayers[data.id]) {
+                const group = new THREE.Group();
+                const col = 0x00ffff; // Cyan body tint for distinct visualization
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), new THREE.MeshStandardMaterial({ color: col }));
+                torso.position.y = 1.45; group.add(torso);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), new THREE.MeshStandardMaterial({ color: col }));
+                head.position.y = 2.05; group.add(head);
+                scene.add(group);
+                remotePlayers[data.id] = { mesh: group };
+            }
+            remotePlayers[data.id].mesh.position.set(data.x, data.y, data.z);
+            remotePlayers[data.id].mesh.rotation.y = data.rotY;
+        }
+
+        function disconnectNetworkPointers() {
+            dataConnections.forEach(c => c.close());
+            dataConnections = [];
+            if(peer) { peer.destroy(); peer = null; }
+            document.getElementById('room-code-display').innerText = "--- ---";
+            document.getElementById('net-status-label').innerText = "Status: System Offline";
         }
 
         function launchGameModeDeployment() {
@@ -411,16 +542,15 @@
 
             clearSimulationEntities();
 
+            // Setup targeted entity ranges
             for (let i = 0; i < 15; i++) spawnTarget();
-            for (let i = 0; i < 5; i++) spawnEnemyHumanoid();
+            
+            // Strictly cap initialization limits to 20 maximum active units
+            for (let i = 0; i < 20; i++) spawnEnemyHumanoid();
 
-            if (selectedMode === 'multi') {
-                document.getElementById('connect-panel-box').style.display = 'block';
-                initMultiplayerNetwork();
+            if (selectedMode === 'multi' && dataConnections.length === 0) {
                 openSettingsMenu();
             } else {
-                document.getElementById('connect-panel-box').style.display = 'none';
-                disconnectNetworkPointers();
                 document.body.requestPointerLock();
             }
         }
@@ -448,7 +578,12 @@
             
             playerHP = MAX_PLAYER_HP;
             score = 0;
+            currentAmmo = MAX_AMMO;
+            isReloading = false;
+            reloadWarning.style.display = 'none';
+            
             scoreElement.innerText = score;
+            ammoCountElement.innerText = currentAmmo;
             hpBarFg.style.width = "100%";
             hpText.innerText = playerHP + "/" + MAX_PLAYER_HP;
             exitScope();
@@ -464,131 +599,6 @@
             enemies.forEach(e => scene.remove(e));
             for (let id in remotePlayers) { scene.remove(remotePlayers[id].mesh); }
             targets = []; enemies = []; remotePlayers = {};
-        }
-
-        function generate6DigitNumericalString() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        }
-
-        function initMultiplayerNetwork() {
-            if (peer) return; 
-            
-            document.getElementById('my-code-label').innerText = "ALLOCATING...";
-            document.getElementById('net-status').innerText = "Connecting to matchmaking servers...";
-
-            const numericId = generate6DigitNumericalString();
-            
-            const p2pConfig = {
-                debug: 1,
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' }
-                    ]
-                }
-            };
-
-            try {
-                peer = new Peer(numericId, p2pConfig);
-
-                peer.on('open', (id) => {
-                    myNetworkId = id;
-                    document.getElementById('my-code-label').innerText = id;
-                    document.getElementById('net-status').innerText = "Status: Open Room. Share this code with another device!";
-                });
-
-                peer.on('connection', (conn) => { 
-                    setupNetworkDataChannels(conn); 
-                    rotateHostRoomIdentity();
-                });
-
-                peer.on('error', (err) => {
-                    console.error("PeerJS Core Error Trace:", err.type, err);
-                    if(err.type === 'unavailable-id') {
-                        setTimeout(initMultiplayerNetwork, 300);
-                    } else {
-                        document.getElementById('net-status').innerText = `Status Error: ${err.type}`;
-                    }
-                });
-            } catch(e) {
-                document.getElementById('net-status').innerText = "Status: Engine initialization fault.";
-            }
-        }
-
-        function rotateHostRoomIdentity() {
-            if (!peer) return;
-            const newNumericId = generate6DigitNumericalString();
-            peer.disconnect(); 
-            
-            setTimeout(() => {
-                if(!activeSimulationRunning || selectedMode !== 'multi') return;
-                peer.reconnect();
-                peer._id = newNumericId;
-                peer.options.id = newNumericId;
-                myNetworkId = newNumericId;
-                document.getElementById('my-code-label').innerText = newNumericId;
-            }, 800);
-        }
-
-        function connectToRoom() {
-            const code = document.getElementById('join-code-input').value.trim();
-            if(!code || !peer) return;
-            document.getElementById('net-status').innerText = `Status: Routing P2P handshake to room [${code}]...`;
-            const conn = peer.connect(code, { reliable: true });
-            setupNetworkDataChannels(conn);
-        }
-
-        function setupNetworkDataChannels(conn) {
-            conn.on('open', () => {
-                if(!dataConnections.find(c => c.peer === conn.peer)) dataConnections.push(conn);
-                document.getElementById('net-status').innerText = `Status: Peer Linked! Players online: ${dataConnections.length + 1}`;
-                conn.send({ type: 'handshake', id: myNetworkId });
-            });
-            conn.on('data', (data) => {
-                if(data.type === 'movement') syncRemoteClientData(data);
-            });
-            conn.on('close', () => {
-                dataConnections = dataConnections.filter(c => c.peer !== conn.peer);
-                document.getElementById('net-status').innerText = dataConnections.length > 0 ? `Players online: ${dataConnections.length + 1}` : "Status: Waiting for players to use your code.";
-                if(remotePlayers[conn.peer]) { scene.remove(remotePlayers[conn.peer].mesh); delete remotePlayers[conn.peer]; }
-            });
-            conn.on('error', (err) => {
-                document.getElementById('net-status').innerText = `Channel Error: ${err}`;
-            });
-        }
-
-        function broadcastMovementPacket() {
-            if(dataConnections.length === 0 || !peer) return;
-            const payload = {
-                type: 'movement', id: myNetworkId,
-                x: camera.position.x, y: camera.position.y, z: camera.position.z,
-                rotY: camera.rotation.y, isKneeling: isKneeling
-            };
-            dataConnections.forEach(conn => { if(conn.open) conn.send(payload); });
-        }
-
-        function syncRemoteClientData(data) {
-            if(!remotePlayers[data.id]) {
-                const group = new THREE.Group();
-                const col = Math.random() * 0xffffff;
-                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), new THREE.MeshStandardMaterial({ color: col }));
-                torso.position.y = 1.45; group.add(torso);
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), new THREE.MeshStandardMaterial({ color: col }));
-                head.position.y = 2.05; group.add(head);
-                scene.add(group);
-                remotePlayers[data.id] = { mesh: group };
-            }
-            remotePlayers[data.id].mesh.position.set(data.x, data.y, data.z);
-            remotePlayers[data.id].mesh.rotation.y = data.rotY;
-        }
-
-        function disconnectNetworkPointers() {
-            dataConnections.forEach(c => c.close());
-            dataConnections = [];
-            if(peer) { peer.destroy(); peer = null; }
-            document.getElementById('my-code-label').innerText = "GENERATING...";
-            document.getElementById('net-status').innerText = "Status: Offline Connection";
         }
 
         function cycleScopeZoom() {
@@ -621,68 +631,125 @@
             buildGunMesh();
         }
 
+        /* --- UPGRADED: DELICATE, SPECIFIC MULTI-PART WEAPON GEOMETRY MODELS --- */
         function buildGunMesh() {
             while(gunContainer.children.length > 0){ gunContainer.remove(gunContainer.children[0]); }
             
-            const ironMat = new THREE.MeshStandardMaterial({ color: 0x222226, roughness: 0.5, metalness: 0.7 });
-            const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6, metalness: 0.8 });
+            const darkSteel = new THREE.MeshStandardMaterial({ color: 0x18181c, roughness: 0.5, metalness: 0.8 });
+            const brightChr = new THREE.MeshStandardMaterial({ color: 0x9999a2, roughness: 0.2, metalness: 0.9 });
+            const polyComposite = new THREE.MeshStandardMaterial({ color: 0x282c35, roughness: 0.7, metalness: 0.2 });
+            const goldAcc = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.8 });
             
             if (currentWeapon === 'pistol') {
-                const grip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.06), new THREE.MeshStandardMaterial({ color: 0x3a2d2d, roughness: 0.8 }));
-                grip.position.set(0, -0.06, 0.02); grip.rotation.x = 0.2; gunContainer.add(grip);
-                const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.07, 0.28), ironMat);
-                body.position.set(0, 0, -0.06); gunContainer.add(body);
-                const laserNode = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
-                laserNode.position.set(0, 0.01, -0.2); gunContainer.add(laserNode);
+                // High-detail Tactical Sidearm
+                const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.24), polyComposite);
+                receiver.position.set(0, 0, 0); gunContainer.add(receiver);
+                
+                const slide = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.03, 0.24), brightChr);
+                slide.position.set(0, 0.035, 0); gunContainer.add(slide);
+                
+                const grip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.13, 0.06), polyComposite);
+                grip.position.set(0, -0.06, 0.06); grip.rotation.x = 0.25; gunContainer.add(grip);
+                
+                const tacticalLaser = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.08), darkSteel);
+                tacticalLaser.position.set(0, -0.02, -0.06); gunContainer.add(tacticalLaser);
                 
             } else if (currentWeapon === 'autoRifle') {
-                const stock = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.11, 0.22), new THREE.MeshStandardMaterial({ color: 0x2b3d26, roughness: 0.7 }));
-                stock.position.set(0, -0.03, 0.18); gunContainer.add(stock);
-                const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.1, 0.38), darkSteelMat);
-                receiver.position.set(0, 0, -0.05); gunContainer.add(receiver);
-                const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.32), ironMat);
-                barrel.position.set(0, 0.01, -0.38); gunContainer.add(barrel);
-                const scopeBar = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.16), ironMat);
-                scopeBar.position.set(0, 0.06, -0.05); gunContainer.add(scopeBar);
+                // Advanced Structural Combat Rifle
+                const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.44), darkSteel);
+                chassis.position.set(0, 0, 0); gunContainer.add(chassis);
+                
+                const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.07, 0.25), polyComposite);
+                handguard.position.set(0, 0.005, -0.25); gunContainer.add(handguard);
+                
+                const matchBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.25), brightChr);
+                matchBarrel.rotation.x = Math.PI / 2; matchBarrel.position.set(0, 0.01, -0.42); gunContainer.add(matchBarrel);
+                
+                const muzzleBrake = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.05), darkSteel);
+                muzzleBrake.rotation.x = Math.PI / 2; muzzleBrake.position.set(0, 0.01, -0.55); gunContainer.add(muzzleBrake);
+                
+                const curvedMag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.18, 0.08), darkSteel);
+                curvedMag.position.set(0, -0.1, -0.08); curvedMag.rotation.x = -0.15; gunContainer.add(curvedMag);
+                
+                const holoSight = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.1), polyComposite);
+                holoSight.position.set(0, 0.06, -0.05); gunContainer.add(holoSight);
                 
             } else if (currentWeapon === 'sniper') {
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.55), darkSteelMat);
-                frame.position.set(0, -0.02, -0.05); gunContainer.add(frame);
-                const longBarrel = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.65), ironMat);
-                longBarrel.position.set(0, 0.02, -0.6); gunContainer.add(longBarrel);
-                const scopeSight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.24), ironMat);
-                scopeSight.position.set(0, 0.08, -0.1); gunContainer.add(scopeSight);
-                const mount = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.12), darkSteelMat);
-                mount.position.set(0, 0.05, -0.1); gunContainer.add(mount);
+                // Precision Bolt-Action Rifle
+                const longChassis = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.09, 0.65), polyComposite);
+                longChassis.position.set(0, -0.02, 0); gunContainer.add(longChassis);
+                
+                const flutedBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.6), darkSteel);
+                flutedBarrel.rotation.x = Math.PI / 2; flutedBarrel.position.set(0, 0.01, -0.55); gunContainer.add(flutedBarrel);
+                
+                const heavyScope = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.28), darkSteel);
+                heavyScope.rotation.x = Math.PI / 2; heavyScope.position.set(0, 0.08, -0.05); gunContainer.add(heavyScope);
+                
+                const scopeRingF = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, 0.03), darkSteel);
+                scopeRingF.position.set(0, 0.04, -0.12); gunContainer.add(scopeRingF);
+                const scopeRingB = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, 0.03), darkSteel);
+                scopeRingB.position.set(0, 0.04, 0.04); gunContainer.add(scopeRingB);
+                
+                const straightMag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.12, 0.07), darkSteel);
+                straightMag.position.set(0, -0.1, -0.04); gunContainer.add(straightMag);
                 
             } else if (currentWeapon === 'shotgun') {
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.11, 0.45), darkSteelMat);
-                frame.position.set(0, 0, -0.05); gunContainer.add(frame);
-                const pump = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.06, 0.22), new THREE.MeshStandardMaterial({ color: 0x5e3a21, roughness: 0.9 }));
-                pump.position.set(0, -0.05, -0.2); gunContainer.add(pump);
-                const tube1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.35), ironMat);
-                tube1.position.set(-0.018, 0.02, -0.4); gunContainer.add(tube1);
-                const tube2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.35), ironMat);
-                tube2.position.set(0.018, 0.02, -0.4); gunContainer.add(tube2);
+                // Heavy Pump Combat Shotgun
+                const solidFrame = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.1, 0.45), darkSteel);
+                solidFrame.position.set(0, 0, 0); gunContainer.add(solidFrame);
+                
+                const ribbedPump = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.22), polyComposite);
+                ribbedPump.rotation.x = Math.PI / 2; ribbedPump.position.set(0, -0.03, -0.24); gunContainer.add(ribbedPump);
+                
+                const doubleBarrel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 0.45), brightChr);
+                doubleBarrel.position.set(0, 0.02, -0.38); gunContainer.add(doubleBarrel);
+                
+                const ironSightFront = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.02, 0.02), darkSteel);
+                ironSightFront.position.set(0, 0.045, -0.58); gunContainer.add(ironSightFront);
                 
             } else if (currentWeapon === 'knife') {
-                const hilt = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.14), new THREE.MeshStandardMaterial({ color: 0x151518, roughness: 0.9 }));
-                hilt.position.set(0, 0, 0.06); gunContainer.add(hilt);
-                const guard = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.02), ironMat);
-                guard.position.set(0, 0, -0.01); gunContainer.add(guard);
-                const blade = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.045, 0.22), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.2 }));
-                blade.position.set(0, 0.01, -0.12); gunContainer.add(blade);
+                // Combat Blade
+                const customHilt = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.15), polyComposite);
+                customHilt.rotation.x = Math.PI / 2; customHilt.position.set(0, 0, 0.08); gunContainer.add(customHilt);
+                
+                const dynamicBlade = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.045, 0.26), brightChr);
+                dynamicBlade.position.set(0, 0.015, -0.12); gunContainer.add(dynamicBlade);
+                
+                const serratedEdge = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.12), goldAcc);
+                serratedEdge.position.set(0, 0.034, -0.08); gunContainer.add(serratedEdge);
             }
         }
 
+        function initiateManualReloadCycle() {
+            if (isReloading || currentAmmo === MAX_AMMO || currentWeapon === 'knife') return;
+            isReloading = true;
+            reloadStartTime = performance.now();
+            reloadWarning.style.display = 'block';
+            reloadWarning.innerText = "RELOADING MAG...";
+            exitScope();
+        }
+
         function shoot() {
+            if (currentWeapon === 'knife') { executeMeleeStrike(); return; }
+            
+            // Check Tactical Reload Bounds
+            if (isReloading) return;
+            if (currentAmmo <= 0) {
+                reloadWarning.style.display = 'block';
+                reloadWarning.innerText = "OUT OF AMMO! PRESS 'R'";
+                return;
+            }
+
             const now = performance.now(); const config = WEAPONS[currentWeapon];
             if (now - lastShotTime < config.fireRate) return; lastShotTime = now;
+
+            // Consume Round Counter Unit
+            currentAmmo--;
+            ammoCountElement.innerText = currentAmmo;
 
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             
-            // Check structural occlusion thresholds to prevent firing through obstacles
             const hitsObstacles = raycaster.intersectObjects(obstacles);
             let absoluteMaxDistance = config.range;
             if (hitsObstacles.length > 0) {
@@ -712,6 +779,38 @@
             }
         }
 
+        function executeMeleeStrike() {
+            const now = performance.now(); const config = WEAPONS['knife'];
+            if (now - lastShotTime < config.fireRate) return; lastShotTime = now;
+
+            // Knife animation push sequence
+            gunContainer.position.z -= 0.15;
+            setTimeout(() => { gunContainer.position.z += 0.15; }, 80);
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            const clickableEnemies = []; enemies.forEach(e => e.userData.hitboxes.forEach(box => clickableEnemies.push(box)));
+            const intersects = raycaster.intersectObjects(clickableEnemies);
+            
+            if (intersects.length > 0 && intersects[0].distance <= config.range) {
+                let rootGroup = intersects[0].object.parent;
+                while (rootGroup && !rootGroup.userData.maxHealth) { rootGroup = rootGroup.parent; }
+                if (!rootGroup || rootGroup.userData.dead) return;
+
+                rootGroup.userData.health -= config.damage;
+                const pct = rootGroup.userData.health / rootGroup.userData.maxHealth;
+                rootGroup.userData.healthBarForeground.scale.x = Math.max(0.0001, pct);
+                rootGroup.userData.healthBarForeground.position.x = - (1 - pct) * (rootGroup.userData.barWidth / 2);
+
+                if (rootGroup.userData.health <= 0) {
+                    rootGroup.userData.dead = true; scene.remove(rootGroup);
+                    enemies = enemies.filter(e => e !== rootGroup); score += 30; spawnEnemyHumanoid();
+                    scoreElement.innerText = score;
+                }
+            }
+        }
+
         function spawnTarget() {
             const targetGroup = new THREE.Group(); const size = Math.random() * 0.4 + 0.4;
             const targetMesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshStandardMaterial({ color: 0x3333ff })); targetGroup.add(targetMesh);
@@ -721,6 +820,9 @@
         }
 
         function spawnEnemyHumanoid() {
+            // Guard enforcement checking total map entity containment allocations
+            if (enemies.length >= 20) return;
+
             const enemyGroup = new THREE.Group(); const baseColor = 0xcc0000;
             const limbMat = new THREE.MeshStandardMaterial({ color: baseColor }); const hitboxes = [];
             const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), limbMat); torso.position.y = 1.45; enemyGroup.add(torso); hitboxes.push(torso);
@@ -758,6 +860,7 @@
             forceRenderHUDUpdate();
             if (playerHP <= 0) {
                 alert("SIMULATION CRITICAL! Coordinate respawn triggered..."); playerHP = MAX_PLAYER_HP; score = 0; scoreElement.innerText = score; forceRenderHUDUpdate();
+                currentAmmo = MAX_AMMO; ammoCountElement.innerText = currentAmmo;
                 camera.position.set(0, STAND_HEIGHT, 0);
             }
         }
@@ -772,7 +875,16 @@
                 const delta = (time - prevTime) / 1000;
                 if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) shoot();
 
-                /* --- +10 HP Every 2 Seconds Core Recovery Mechanics --- */
+                // Track Active Magazine Reload Timers
+                if (isReloading) {
+                    if (time - reloadStartTime >= RELOAD_DURATION) {
+                        currentAmmo = MAX_AMMO;
+                        ammoCountElement.innerText = currentAmmo;
+                        isReloading = false;
+                        reloadWarning.style.display = 'none';
+                    }
+                }
+
                 if (time - lastRegenTime >= 2000) {
                     lastRegenTime = time; 
                     if (playerHP > 0 && playerHP < MAX_PLAYER_HP) {
@@ -808,7 +920,8 @@
                     translationTarget.addScaledVector(camRight, moveVector.x); 
                     translationTarget.normalize();
 
-                    let movementSpeed = 57.6;
+                    // UPGRADED: Speed variables amplified by exactly +20%
+                    let movementSpeed = 57.6 * 1.20; 
                     if (isShielding) movementSpeed *= 0.45; 
                     if (isKneeling) movementSpeed *= 0.5; 
                     if (!canJump) movementSpeed *= 0.65; 
@@ -819,7 +932,6 @@
                 camera.position.x += velocity.x * delta; camera.position.z += velocity.z * delta; camera.position.y += velocity.y * delta; 
                 if (camera.position.y < currentBaseHeight) { velocity.y = 0; camera.position.y = currentBaseHeight; canJump = true; }
 
-                // Lock player movement inside warehouse boundary parameters
                 camera.position.x = Math.max(-78, Math.min(78, camera.position.x));
                 camera.position.z = Math.max(-78, Math.min(78, camera.position.z));
 
@@ -840,7 +952,6 @@
                     }
                     enemy.position.addScaledVector(enemy.userData.moveDir, 4.5 * delta);
                     
-                    // Keep bots from walking outside perimeter walls
                     enemy.position.x = Math.max(-76, Math.min(76, enemy.position.x));
                     enemy.position.z = Math.max(-76, Math.min(76, enemy.position.z));
 
@@ -853,7 +964,6 @@
                         if (time - enemy.userData.lastShotTime > 1500) { 
                             enemy.userData.lastShotTime = time;
 
-                            // Cast a tracking ray down enemy line of sight to check for obstacles
                             const eyeRay = new THREE.Raycaster();
                             const eyeDirection = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
                             eyeRay.set(enemy.position, eyeDirection);
@@ -861,7 +971,6 @@
                             const intercepts = eyeRay.intersectObjects(obstacles);
                             const playerDist = enemy.position.distanceTo(camera.position);
                             
-                            // Fire laser beam ONLY if path to player is clear
                             if (intercepts.length === 0 || intercepts[0].distance > playerDist) {
                                 const laserPoints = [new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z), new THREE.Vector3(camera.position.x, camera.position.y - 0.2, camera.position.z)];
                                 const laserLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(laserPoints), new THREE.LineBasicMaterial({ color: 0xff0033 }));
