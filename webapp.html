@@ -809,4 +809,193 @@
 
             const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.8), armorMat);
             leftLeg.position.set(-0.24, 0.6, 0);
-            enemyGroup.add(leftLeg); hit
+            enemyGroup.add(leftLeg); hitboxes.push(leftLeg);
+
+            const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.8), armorMat);
+            rightLeg.position.set(0.24, 0.6, 0);
+            enemyGroup.add(rightLeg); hitboxes.push(rightLeg);
+
+            const ringGeo = new THREE.TorusGeometry(0.5, 0.02, 4, 24);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, wireframe: true });
+            const energyRing = new THREE.Mesh(ringGeo, ringMat);
+            energyRing.position.y = 1.5; energyRing.rotation.x = Math.PI/2;
+            enemyGroup.add(energyRing);
+
+            createEntityHealthUI(enemyGroup, 1.2, 120, 0x475569, true);
+            
+            enemyGroup.userData = Object.assign({}, enemyGroup.userData, {
+                isEnemy: true, health: 120, maxHealth: 120, dead: false, meshLink: armorChest, hitboxes: hitboxes, patrolTimer: 0,
+                moveDir: new THREE.Vector3((Math.random()-0.5), 0, (Math.random()-0.5)).normalize(), lastShotTime: 0, leftLegLink: leftLeg, rightLegLink: rightLeg, cosmeticRing: energyRing
+            });
+            
+            let randX = (Math.random() > 0.5) ? (15 + Math.random() * 60) : (-15 - Math.random() * 60);
+            let randZ = (Math.random() - 0.5) * 150;
+
+            enemyGroup.position.set(randX, 0, randZ);
+            scene.add(enemyGroup); enemies.push(enemyGroup);
+        }
+
+        function createEntityHealthUI(group, size, maxHP, col, isBot) {
+            const barWidth = size * 1.5, barHeight = 0.12; const healthBarGroup = new THREE.Group(); healthBarGroup.position.y = size + (isBot ? 1.3 : 0.4);
+            const barBg = new THREE.Mesh(new THREE.PlaneGeometry(barWidth, barHeight), new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide })); healthBarGroup.add(barBg);
+            const barFg = new THREE.Mesh(new THREE.PlaneGeometry(barWidth, barHeight), new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide })); barFg.position.z = 0.01; healthBarGroup.add(barFg);
+            group.add(healthBarGroup);
+            group.userData = {
+                health: maxHP, maxHealth: maxHP, dead: false, healthBarContainer: healthBarGroup, healthBarForeground: barFg, barWidth: barWidth,
+                spinX: ((Math.random() - 0.5) * 2) * OBJECT_SLOWDOWN_MODIFIER, spinY: ((Math.random() - 0.5) * 2) * OBJECT_SLOWDOWN_MODIFIER
+            };
+        }
+
+        function forceRenderHUDUpdate() {
+            hpBarFg.style.width = (playerHP / MAX_PLAYER_HP * 100) + "%"; 
+            hpText.innerText = playerHP + "/" + MAX_PLAYER_HP;
+        }
+
+        function damagePlayer(amount) {
+            if (isShielding || !activeSimulationRunning || document.pointerLockElement !== document.body) return; 
+            playerHP -= amount; if (playerHP < 0) playerHP = 0;
+            forceRenderHUDUpdate();
+            if (playerHP <= 0) {
+                playerHP = MAX_PLAYER_HP; score = 0; scoreElement.innerText = score; forceRenderHUDUpdate();
+                currentAmmo = MAX_AMMO; ammoCountElement.innerText = currentAmmo;
+                camera.position.set(-20, STAND_HEIGHT, 0); // Reset safely out of water
+            }
+        }
+
+        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+            const time = performance.now();
+
+            if (activeSimulationRunning && !settingsMenuOpen && document.pointerLockElement === document.body) {
+                const delta = (time - prevTime) / 1000;
+                if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) shoot();
+
+                if (isReloading && time - reloadStartTime >= RELOAD_DURATION) {
+                    currentAmmo = MAX_AMMO; ammoCountElement.innerText = currentAmmo; isReloading = false; reloadWarning.style.display = 'none';
+                }
+
+                if (time - lastRegenTime >= 2000) {
+                    lastRegenTime = time; if (playerHP > 0 && playerHP < MAX_PLAYER_HP) { playerHP = Math.min(MAX_PLAYER_HP, playerHP + 10); forceRenderHUDUpdate(); }
+                }
+
+                const targetBaseHeight = isKneeling ? KNEE_HEIGHT : STAND_HEIGHT;
+                currentBaseHeight += (targetBaseHeight - currentBaseHeight) * 12.0 * delta;
+
+                velocity.x -= velocity.x * 10.0 * delta; velocity.z -= velocity.z * 10.0 * delta; velocity.y -= 9.8 * 3.5 * delta; 
+
+                const moveVector = new THREE.Vector3(0, 0, 0);
+                if (keysPressed.KeyW) moveVector.z -= 1;
+                if (keysPressed.KeyS) moveVector.z += 1;
+                if (keysPressed.KeyA) moveVector.x += 1; 
+                if (keysPressed.KeyD) moveVector.x -= 1; 
+
+                if (moveVector.lengthSq() > 0) {
+                    moveVector.normalize(); 
+                    const camYaw = new THREE.Vector3(); camera.getWorldDirection(camYaw); camYaw.y = 0; camYaw.normalize();
+                    const camRight = new THREE.Vector3().crossVectors(camYaw, camera.up).negate();
+                    const translationTarget = new THREE.Vector3();
+                    translationTarget.addScaledVector(camYaw, -moveVector.z); translationTarget.addScaledVector(camRight, moveVector.x); translationTarget.normalize();
+
+                    let movementSpeed = 69.12; 
+                    if (isShielding) movementSpeed *= 0.45; 
+                    if (isKneeling) movementSpeed *= 0.5; 
+                    velocity.addScaledVector(translationTarget, movementSpeed * delta);
+                }
+
+                // Temporary speculative update to verify collisions sequentially
+                const specX = camera.position.x + (velocity.x * delta);
+                const specZ = camera.position.z + (velocity.z * delta);
+                let onAnObjectFloor = false;
+
+                // Physics check against bounding boxes
+                obstacles.forEach(obs => {
+                    const box = new THREE.Box3().setFromObject(obs);
+                    
+                    // Standard player footprint calculation padding
+                    if (specX >= box.min.x - 0.45 && specX <= box.max.x + 0.45 &&
+                        specZ >= box.min.z - 0.45 && specZ <= box.max.z + 0.45) {
+                        
+                        // Check if player is on top surface of obstacle
+                        if (camera.position.y >= box.max.y + currentBaseHeight - 0.3) {
+                            camera.position.y = box.max.y + currentBaseHeight;
+                            velocity.y = 0;
+                            canJump = true;
+                            onAnObjectFloor = true;
+                        } else {
+                            // Sideways bounce back calculation to completely eliminate wall passing bugs
+                            velocity.x *= -0.2;
+                            velocity.z *= -0.2;
+                        }
+                    }
+                });
+
+                camera.position.x += velocity.x * delta; 
+                camera.position.z += velocity.z * delta;
+                
+                if (!onAnObjectFloor) {
+                    camera.position.y += velocity.y * delta; 
+                    if (camera.position.y < currentBaseHeight) { 
+                        velocity.y = 0; 
+                        camera.position.y = currentBaseHeight; 
+                        canJump = true; 
+                    }
+                }
+
+                // Map border constraints mapping
+                camera.position.x = Math.max(-88, Math.min(88, camera.position.x));
+                camera.position.z = Math.max(-88, Math.min(88, camera.position.z));
+
+                broadcastMovementPacket();
+
+                targets.forEach((t) => {
+                    if(t.userData && t.userData.healthBarContainer) t.userData.healthBarContainer.quaternion.copy(camera.quaternion);
+                });
+
+                enemies.forEach((enemy) => {
+                    if (enemy.userData.dead) return;
+                    enemy.userData.patrolTimer -= delta;
+                    if(enemy.userData.patrolTimer <= 0) {
+                        enemy.userData.patrolTimer = Math.random() * 3 + 2;
+                        enemy.userData.moveDir.set((Math.random()-0.5), 0, (Math.random()-0.5)).normalize();
+                    }
+                    
+                    // Keep bots from running down straight inside the deep center water canal
+                    const enemySpecX = enemy.position.x + (enemy.userData.moveDir.x * 4.5 * delta);
+                    if (Math.abs(enemySpecX) < 7) {
+                        enemy.userData.moveDir.x *= -1; // Reverse course
+                    }
+
+                    enemy.position.addScaledVector(enemy.userData.moveDir, 4.5 * delta);
+                    enemy.position.x = Math.max(-86, Math.min(86, enemy.position.x));
+                    enemy.position.z = Math.max(-86, Math.min(86, enemy.position.z));
+
+                    if(enemy.userData.leftLegLink) enemy.userData.leftLegLink.rotation.x = Math.sin(time * 0.007) * 0.4;
+                    if(enemy.userData.rightLegLink) enemy.userData.rightLegLink.rotation.x = -Math.sin(time * 0.007) * 0.4;
+                    if(enemy.userData.cosmeticRing) enemy.userData.cosmeticRing.rotation.z += 0.02;
+
+                    enemy.lookAt(camera.position.x, enemy.position.y, camera.position.z);
+                    if(enemy.userData.healthBarContainer) enemy.userData.healthBarContainer.quaternion.copy(camera.quaternion);
+
+                    if (enemy.position.distanceTo(camera.position) < 55 && time - enemy.userData.lastShotTime > 1500) { 
+                        enemy.userData.lastShotTime = time;
+                        const eyeRay = new THREE.Raycaster();
+                        const eyeDirection = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
+                        eyeRay.set(enemy.position, eyeDirection);
+                        const intercepts = eyeRay.intersectObjects(obstacles);
+                        if (intercepts.length === 0 || intercepts[0].distance > enemy.position.distanceTo(camera.position)) {
+                            const laserPoints = [new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z), new THREE.Vector3(camera.position.x, camera.position.y - 0.2, camera.position.z)];
+                            const laserLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(laserPoints), new THREE.LineBasicMaterial({ color: 0xef4444 }));
+                            scene.add(laserLine); setTimeout(() => scene.remove(laserLine), 70);
+                            if (!isShielding) damagePlayer(5); 
+                        }
+                    }
+                });
+            }
+            prevTime = time;
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
