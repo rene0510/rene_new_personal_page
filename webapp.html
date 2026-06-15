@@ -251,7 +251,6 @@
         let peer = null, dataConnections = [];
         let myNetworkId = "";
 
-        // Ammo state definitions (Updated to 20 Max)
         const MAX_AMMO = 20;
         let currentAmmo = 20;
         let isReloading = false;
@@ -325,8 +324,13 @@
                 }
             });
 
+            // FIXED POINTERLOCK LISTENER TO ARREST PREMATURE ENGINE LOOPS
             document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement !== document.body) {
+                if (document.pointerLockElement === document.body) {
+                    settingsMenuOpen = false;
+                    settingsOverlay.style.display = 'none';
+                    document.getElementById('blocker').style.display = 'none';
+                } else {
                     if (activeSimulationRunning) {
                         openSettingsMenu();
                     }
@@ -352,7 +356,7 @@
             document.addEventListener('mouseup', (event) => { if (event.button === 0) isLeftMouseDown = false; });
 
             document.addEventListener('keydown', (e) => {
-                if (!activeSimulationRunning || settingsMenuOpen) return;
+                if (!activeSimulationRunning || settingsMenuOpen || document.pointerLockElement !== document.body) return;
                 if (WEAPON_KEYS[e.code]) { selectWeapon(WEAPON_KEYS[e.code]); return; }
                 if (e.code in keysPressed) { keysPressed[e.code] = true; return; }
                 if (e.code === 'KeyR') { initiateManualReloadCycle(); return; }
@@ -371,7 +375,6 @@
         }
 
         function buildArsenalWarehouseEnvironment() {
-            // Concrete Floor configuration
             const floorGeo = new THREE.PlaneGeometry(160, 160);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.8, metalness: 0.1 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -396,21 +399,16 @@
             const wallW = new THREE.Mesh(new THREE.BoxGeometry(2, 14, 160), boundaryWallMat);
             wallW.position.set(-80, 7, 0); scene.add(wallW);
 
-            // --- BUILDINGS, STAIRS & EXTRA OBSTACLES ---
-            // Main Central Tower Structure Block
-            generateTacticalCrate(16, 6, 16, 0, 3, 0, 0x7e8896); // Ground layer building body
-            generateTacticalCrate(14, 0.4, 14, 0, 6.2, 0, 0x505863); // Roof deck slab
+            generateTacticalCrate(16, 6, 16, 0, 3, 0, 0x7e8896); 
+            generateTacticalCrate(14, 0.4, 14, 0, 6.2, 0, 0x505863); 
 
-            // Structural walkable staircase leading up tower wall (Z-Axis step-up iterations)
             const stepsCount = 12;
             const startZ = 8.5;
             const startY = 0.25;
             for(let i=0; i<stepsCount; i++) {
-                // Generate step elements that act as climbing physics targets
                 generateTacticalCrate(3, 0.5, 0.8, 6.5, startY + (i*0.5), startZ + (i*0.6), 0x555c66);
             }
 
-            // Additional Scattered Urban Cover Units
             generateTacticalCrate(12, 6, 12, -25, 3, -20, 0x707a8a);
             generateTacticalCrate(8, 8, 8, 30, 4, -40, 0x5a6370);
             generateTacticalCrate(16, 5, 6, -35, 2.5, 30, 0x828d9e);
@@ -419,7 +417,6 @@
             generateTacticalCrate(14, 6, 14, 45, 3, 5, 0x76818c);
             generateTacticalCrate(22, 5, 8, -5, 2.5, 45, 0x485059);
             
-            // New Added Crates 
             generateTacticalCrate(5, 5, 5, -15, 2.5, -50, 0x6b7280);
             generateTacticalCrate(4, 4, 4, -45, 2, -10, 0x4b5563);
             generateTacticalCrate(6, 6, 6, 50, 3, -25, 0x374151);
@@ -518,20 +515,19 @@
         }
 
         function launchGameModeDeployment() {
-            document.getElementById('blocker').style.display = 'none';
-            activeSimulationRunning = true;
-            settingsMenuOpen = false;
-
             clearSimulationEntities();
 
-            // Spawn standard float matrices and advanced realistic enemies
             for (let i = 0; i < 10; i++) spawnTarget();
             for (let i = 0; i < 15; i++) spawnEnemyHumanoid();
 
             if (selectedMode === 'multi' && dataConnections.length === 0) {
+                activeSimulationRunning = true;
                 openSettingsMenu();
             } else {
+                // LOCK MOUSE POINTER DIRECTLY BEFORE THROWING HUD BLOCKERS AWAY
                 document.body.requestPointerLock();
+                activeSimulationRunning = true;
+                settingsMenuOpen = false;
             }
         }
 
@@ -540,7 +536,6 @@
             settingsOverlay.style.display = 'flex';
         }
 
-        // Safe layout resolution hook mapping target links
         function getHitboxRaycastTargets() {
             const list = [];
             targets.forEach(t => { if(t.userData && t.userData.meshLink) list.push(t.userData.meshLink); });
@@ -549,8 +544,6 @@
         }
 
         function resumeSimulation() {
-            settingsMenuOpen = false;
-            settingsOverlay.style.display = 'none';
             document.body.requestPointerLock();
         }
 
@@ -658,7 +651,6 @@
                 absoluteMaxDistance = Math.min(absoluteMaxDistance, hitsObstacles[0].distance);
             }
 
-            // Fixed safe raycasting target resolution logic loop
             const targetsToCheck = getHitboxRaycastTargets();
             const intersects = raycaster.intersectObjects(targetsToCheck);
             
@@ -716,18 +708,16 @@
             scene.add(targetGroup); targets.push(targetGroup);
         }
 
-        // DELICATE AND REALISTIC ENEMY SPECIFICATION COMPILATION
         function spawnEnemyHumanoid() {
             if (enemies.length >= 25) return;
 
             const enemyGroup = new THREE.Group();
-            const armorMat = new THREE.MeshStandardMaterial({ color: 0x3a4454, roughness: 0.4, metalness: 0.7 }); // Carbon armor plates
-            const underJointMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.6 }); // Structural dark frame wires
-            const lensNeonMat = new THREE.MeshBasicMaterial({ color: 0xef4444 }); // Visual sensor laser component
+            const armorMat = new THREE.MeshStandardMaterial({ color: 0x3a4454, roughness: 0.4, metalness: 0.7 }); 
+            const underJointMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.6 }); 
+            const lensNeonMat = new THREE.MeshBasicMaterial({ color: 0xef4444 }); 
             
             const hitboxes = [];
 
-            // Segmented Torso Construction
             const armorChest = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.6, 0.45), armorMat);
             armorChest.position.y = 1.6;
             enemyGroup.add(armorChest); hitboxes.push(armorChest);
@@ -736,7 +726,6 @@
             innerCore.position.y = 1.2;
             enemyGroup.add(innerCore); hitboxes.push(innerCore);
 
-            // Detailed Tactical Visor Head
             const headBase = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), armorMat);
             headBase.position.y = 2.05;
             
@@ -745,7 +734,6 @@
             enemyGroup.add(headBase); enemyGroup.add(glowingEyeLens);
             hitboxes.push(headBase);
 
-            // Separate Articulated Legs
             const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.8), armorMat);
             leftLeg.position.set(-0.24, 0.6, 0);
             enemyGroup.add(leftLeg); hitboxes.push(leftLeg);
@@ -754,7 +742,6 @@
             rightLeg.position.set(0.24, 0.6, 0);
             enemyGroup.add(rightLeg); hitboxes.push(rightLeg);
 
-            // Sci-Fi Floating Aura Energy Halo Ring
             const ringGeo = new THREE.TorusGeometry(0.5, 0.02, 4, 24);
             const ringMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true });
             const energyRing = new THREE.Mesh(ringGeo, ringMat);
@@ -768,7 +755,6 @@
                 moveDir: new THREE.Vector3((Math.random()-0.5), 0, (Math.random()-0.5)).normalize(), lastShotTime: 0, leftLegLink: leftLeg, rightLegLink: rightLeg, cosmeticRing: energyRing
             });
             
-            // Random ground placement away from immediate zero center building footprint
             let randX = (Math.random() - 0.5) * 130;
             let randZ = (Math.random() - 0.5) * 130;
             if(Math.abs(randX) < 15) randX += 25;
@@ -795,7 +781,8 @@
         }
 
         function damagePlayer(amount) {
-            if (isShielding || !activeSimulationRunning) return; playerHP -= amount; if (playerHP < 0) playerHP = 0;
+            if (isShielding || !activeSimulationRunning || document.pointerLockElement !== document.body) return; 
+            playerHP -= amount; if (playerHP < 0) playerHP = 0;
             forceRenderHUDUpdate();
             if (playerHP <= 0) {
                 playerHP = MAX_PLAYER_HP; score = 0; scoreElement.innerText = score; forceRenderHUDUpdate();
@@ -810,7 +797,8 @@
             requestAnimationFrame(animateLoop);
             const time = performance.now();
 
-            if (activeSimulationRunning && !settingsMenuOpen) {
+            // PREVENT RUNNING MOVEMENT CALCULATIONS UNTIL THE POINTER LOCK IS ACCEPTED
+            if (activeSimulationRunning && !settingsMenuOpen && document.pointerLockElement === document.body) {
                 const delta = (time - prevTime) / 1000;
                 if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) shoot();
 
@@ -830,8 +818,6 @@
                 const moveVector = new THREE.Vector3(0, 0, 0);
                 if (keysPressed.KeyW) moveVector.z -= 1;
                 if (keysPressed.KeyS) moveVector.z += 1;
-                
-                // INVERTED "A" / "D" KEY SYSTEM AS REQUESTED
                 if (keysPressed.KeyA) moveVector.x += 1; 
                 if (keysPressed.KeyD) moveVector.x -= 1; 
 
@@ -850,16 +836,12 @@
 
                 camera.position.x += velocity.x * delta; camera.position.z += velocity.z * delta; camera.position.y += velocity.y * delta; 
                 
-                // Ground Map Collision Bounding Matrix Floor Plate Check
                 if (camera.position.y < currentBaseHeight) { velocity.y = 0; camera.position.y = currentBaseHeight; canJump = true; }
 
-                // Check environment platform staircase bounding box coordinates manually to ascend surfaces smoothly
                 obstacles.forEach(obs => {
                     const box = new THREE.Box3().setFromObject(obs);
-                    // If player coordinate falls within horizontally extended padding matrix margins
                     if (camera.position.x >= box.min.x - 0.4 && camera.position.x <= box.max.x + 0.4 &&
                         camera.position.z >= box.min.z - 0.4 && camera.position.z <= box.max.z + 0.4) {
-                        // If near or below the upper step deck edge boundary flat plane top surface elevation
                         if (camera.position.y <= box.max.y + currentBaseHeight && camera.position.y >= box.max.y - 0.5) {
                             camera.position.y = box.max.y + currentBaseHeight;
                             velocity.y = 0;
@@ -905,7 +887,7 @@
                             const laserPoints = [new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z), new THREE.Vector3(camera.position.x, camera.position.y - 0.2, camera.position.z)];
                             const laserLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(laserPoints), new THREE.LineBasicMaterial({ color: 0xff0033 }));
                             scene.add(laserLine); setTimeout(() => scene.remove(laserLine), 70);
-                            if (!isShielding) damagePlayer(5); // Fixed damage limit calculation
+                            if (!isShielding) damagePlayer(5); 
                         }
                     }
                 });
