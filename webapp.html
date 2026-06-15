@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Arsenal Arena Pro</title>
+    <title>3D WebGL FPS - Alpine Range Pro</title>
     <style>
         body {
             margin: 0; overflow: hidden;
-            background-color: #d1d5db;
+            background-color: #cbd5e1;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
@@ -15,145 +15,142 @@
         /* --- Pre-Game Blocker --- */
         #blocker {
             position: absolute; width: 100%; height: 100%;
-            background-color: rgba(230, 235, 245, 0.95);
+            background-color: rgba(241, 245, 249, 0.95);
             display: flex; justify-content: center; align-items: center;
-            color: #111; text-align: center; z-index: 10;
+            color: #0f172a; text-align: center; z-index: 10;
         }
         #menu-panel {
-            background: rgba(255, 255, 255, 0.95); border: 2px solid #ff5f9e;
-            padding: 40px; border-radius: 15px;
-            box-shadow: 0 0 30px rgba(255, 95, 158, 0.2); max-width: 540px;
+            background: rgba(255, 255, 255, 0.98); border: 2px solid #0ea5e9;
+            padding: 40px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.15); max-width: 540px;
             width: 100%; box-sizing: border-box;
         }
         #menu-panel h1 {
-            margin-top: 0; color: #ff5f9e; letter-spacing: 4px;
-            font-size: 34px; text-shadow: 0 0 10px rgba(255, 95, 158, 0.3);
+            margin-top: 0; color: #0ea5e9; letter-spacing: 4px;
+            font-size: 34px; text-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
         }
         
         .mode-selection-container {
             display: flex; gap: 20px; justify-content: center; margin: 25px 0;
         }
         .mode-card {
-            border: 2px solid rgba(0, 0, 0, 0.15); border-radius: 8px;
+            border: 2px solid rgba(15, 23, 42, 0.1); border-radius: 8px;
             padding: 15px 20px; width: 180px; cursor: pointer; transition: all 0.2s;
-            background: rgba(0,0,0,0.02);
+            background: rgba(15, 23, 42, 0.02);
         }
-        .mode-card:hover { border-color: #0088cc; background: rgba(0, 136, 204, 0.05); }
-        .mode-card.selected { border-color: #ff5f9e; background: rgba(255, 95, 158, 0.15); }
-        .mode-card h3 { margin: 0 0 8px 0; color: #111; }
-        .mode-card p { margin: 0; font-size: 12px; color: #666; line-height: 1.4; }
+        .mode-card:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+        .mode-card.selected { border-color: #0ea5e9; background: rgba(14, 165, 233, 0.1); }
+        .mode-card h3 { margin: 0 0 8px 0; color: #0f172a; }
+        .mode-card p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.4; }
 
         .start-btn {
-            background: #ff5f9e; color: #fff; border: none;
+            background: #0ea5e9; color: #fff; border: none;
             padding: 15px 45px; font-size: 18px; font-weight: bold;
-            border-radius: 5px; cursor: pointer; margin-top: 10px;
+            border-radius: 6px; cursor: pointer; margin-top: 10px;
             letter-spacing: 2px; transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(255, 95, 158, 0.4);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
         }
-        .start-btn:hover { background: #111; color: #fff; transform: scale(1.03); }
+        .start-btn:hover { background: #0f172a; color: #fff; transform: scale(1.02); }
         
         /* --- Network Hub Panel --- */
         #network-setup-box {
-            display: none; background: rgba(0, 0, 0, 0.03);
-            border: 1px dashed rgba(0, 136, 204, 0.5);
+            display: none; background: rgba(15, 23, 42, 0.02);
+            border: 1px dashed rgba(14, 165, 233, 0.5);
             border-radius: 6px; padding: 15px; margin: 20px 0; text-align: left;
         }
-        #network-setup-box h3 { margin: 0 0 12px 0; color: #0088cc; font-size: 15px; letter-spacing: 1px; }
+        #network-setup-box h3 { margin: 0 0 12px 0; color: #0ea5e9; font-size: 15px; letter-spacing: 1px; }
         .net-action-row { display: flex; gap: 10px; margin-bottom: 12px; }
         .net-action-row button {
-            background: #eee; border: 1px solid #0088cc; color: #0088cc;
+            background: #fff; border: 1px solid #0ea5e9; color: #0ea5e9;
             padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;
         }
-        .net-action-row button:hover { background: rgba(0, 136, 204, 0.1); }
+        .net-action-row button:hover { background: rgba(14, 165, 233, 0.08); }
         .connect-input-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
         .connect-input-row input {
-            background: #fff; border: 1px solid #ff5f9e; color: #111;
+            background: #fff; border: 1px solid #0ea5e9; color: #0f172a;
             padding: 8px; border-radius: 4px; font-weight: bold; outline: none; width: 140px; text-align: center; font-size: 16px;
         }
         .connect-input-row button {
-            background: #ff5f9e; color: #fff; border: none; padding: 8px 16px;
+            background: #0ea5e9; color: #fff; border: none; padding: 8px 16px;
             font-weight: bold; border-radius: 4px; cursor: pointer;
         }
-        .code-highlight { font-family: monospace; font-size: 20px; color: #00aa66; font-weight: bold; letter-spacing: 1px; }
-        #net-status-label { font-size: 12px; color: #555; margin-top: 8px; display: block; }
+        .code-highlight { font-family: monospace; font-size: 20px; color: #10b981; font-weight: bold; letter-spacing: 1px; }
+        #net-status-label { font-size: 12px; color: #64748b; margin-top: 8px; display: block; }
 
         /* --- Overviews Panel --- */
         #settings-overlay {
             display: none; position: absolute; width: 100%; height: 100%;
-            background-color: rgba(240, 244, 250, 0.9);
-            justify-content: center; align-items: center; z-index: 9; color: #111;
+            background-color: rgba(241, 245, 249, 0.9);
+            justify-content: center; align-items: center; z-index: 9; color: #0f172a;
         }
         .settings-box {
-            background: #fff; border: 2px solid #ff5f9e; padding: 35px;
+            background: #fff; border: 2px solid #0ea5e9; padding: 35px;
             border-radius: 12px; max-width: 550px; width: 100%;
-            box-shadow: 0 0 25px rgba(255, 95, 158, 0.15);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.1);
         }
         .settings-box h2 { 
-            margin-top: 0; color: #ff5f9e; letter-spacing: 2px; 
-            border-bottom: 1px solid rgba(255,95,158,0.2); padding-bottom: 10px; 
-            text-shadow: 0 0 8px rgba(255,95,158,0.2);
+            margin-top: 0; color: #0ea5e9; letter-spacing: 2px; 
+            border-bottom: 1px solid rgba(14, 165, 233, 0.2); padding-bottom: 10px; 
         }
-        .settings-grid { text-align: left; font-size: 14px; line-height: 1.7; margin: 15px 0; color: #333; }
-        .settings-grid strong { color: #000; }
+        .settings-grid { text-align: left; font-size: 14px; line-height: 1.7; margin: 15px 0; color: #334155; }
+        .settings-grid strong { color: #0f172a; }
         
         .settings-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 20px; }
-        .btn-resume { background: #ff5f9e; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        .btn-endgame { background: #ff3333; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-resume { background: #0ea5e9; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-endgame { background: #ef4444; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .btn-resume:hover, .btn-endgame:hover { opacity: 0.9; transform: scale(1.02); }
 
         /* --- HUD Assets --- */
         #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); pointer-events: none; z-index: 5; }
-        #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(0, 0, 0, 0.8); }
+        #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(15, 23, 42, 0.8); }
         #crosshair::before { top: 4px; left: -5px; width: 20px; height: 2px; }
         #crosshair::after { top: -5px; left: 4px; width: 2px; height: 20px; }
         #scope-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: radial-gradient(circle, transparent 25%, rgba(255,255,255,0.85) 60%); }
-        .scope-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid rgba(255, 95, 158, 0.5); border-radius: 50%; }
+        .scope-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid rgba(14, 165, 233, 0.5); border-radius: 50%; }
         #scope-outer { width: 500px; height: 500px; }
-        #scope-mid { width: 320px; height: 320px; border: 1px dashed rgba(255, 95, 158, 0.3); }
-        #scope-inner { width: 120px; height: 120px; border: 1px solid rgba(255, 95, 158, 0.6); }
-        #scope-reticle-h { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(255,95,158,0.5); }
-        #scope-reticle-v { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: rgba(255,95,158,0.5); }
-        #scope-hud-readout { position: absolute; top: calc(50% + 70px); left: 50%; transform: translateX(-50%); color: #ff5f9e; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.8); padding: 4px 12px; border-radius: 3px; border: 1px solid rgba(255, 95, 158, 0.3); }
-        #shield-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; border: 15px solid rgba(0, 120, 255, 0.4); box-shadow: inset 0 0 80px rgba(0, 100, 255, 0.3); box-sizing: border-box; }
+        #scope-mid { width: 320px; height: 320px; border: 1px dashed rgba(14, 165, 233, 0.3); }
+        #scope-inner { width: 120px; height: 120px; border: 1px solid rgba(14, 165, 233, 0.6); }
+        #scope-reticle-h { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(14, 165, 233,0.5); }
+        #scope-reticle-v { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: rgba(14, 165, 233,0.5); }
+        #scope-hud-readout { position: absolute; top: calc(50% + 70px); left: 50%; transform: translateX(-50%); color: #0ea5e9; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.8); padding: 4px 12px; border-radius: 3px; border: 1px solid rgba(14, 165, 233, 0.3); }
+        #shield-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; border: 15px solid rgba(14, 165, 233, 0.4); box-shadow: inset 0 0 80px rgba(14, 165, 233, 0.3); box-sizing: border-box; }
         
         /* --- Vital Indicators --- */
-        #hud { position: absolute; top: 20px; left: 20px; color: #111; pointer-events: none; z-index: 5; font-weight: bold; }
+        #hud { position: absolute; top: 20px; left: 20px; color: #0f172a; pointer-events: none; z-index: 5; font-weight: bold; }
         #vitals-container { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        #hp-bar-bg { width: 250px; height: 18px; background: rgba(200,180,180,0.5); border: 2px solid #ff3333; border-radius: 3px; overflow: hidden; }
-        #hp-bar-fg { width: 100%; height: 100%; background: #ff3333; transition: width 0.05s ease; }
+        #hp-bar-bg { width: 250px; height: 18px; background: rgba(226, 232, 240, 0.8); border: 2px solid #ef4444; border-radius: 3px; overflow: hidden; }
+        #hp-bar-fg { width: 100%; height: 100%; background: #ef4444; transition: width 0.05s ease; }
         #score-display { font-size: 24px; text-shadow: 1px 1px 2px #fff; margin-top: 5px; }
         
-        /* Tactical Ammo Display Counters */
-        #ammo-display { font-size: 26px; color: #0077aa; text-shadow: 1px 1px 2px #fff; margin-top: 5px; letter-spacing: 1px; }
-        #reload-warning { display: none; position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); color: #ff3333; font-size: 20px; font-weight: bold; text-shadow: 0 0 8px #fff; background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 4px; border: 1px solid #ff3333; z-index: 5; }
+        #ammo-display { font-size: 26px; color: #0284c7; text-shadow: 1px 1px 2px #fff; margin-top: 5px; letter-spacing: 1px; }
+        #reload-warning { display: none; position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); color: #ef4444; font-size: 20px; font-weight: bold; text-shadow: 0 0 8px #fff; background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 4px; border: 1px solid #ef4444; z-index: 5; }
 
-        #roblox-hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(255, 255, 255, 0.8); border: 1px solid #ccc; padding: 6px; border-radius: 8px; z-index: 5; }
-        .hotbar-slot { width: 85px; height: 80px; background: rgba(240, 240, 245, 0.9); border: 2px solid rgba(0, 0, 0, 0.1); border-radius: 6px; color: #333; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 6px 2px; box-sizing: border-box; }
-        .hotbar-slot.active { background: rgba(255, 95, 158, 0.15); border: 2px solid #ff5f9e; box-shadow: 0 0 12px rgba(255, 95, 158, 0.3); color: #000; }
-        .slot-number { position: absolute; top: 3px; left: 5px; font-size: 11px; font-weight: bold; color: rgba(0, 0, 0, 0.3); }
+        #roblox-hotbar { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(255, 255, 255, 0.85); border: 1px solid #cbd5e1; padding: 6px; border-radius: 8px; z-index: 5; }
+        .hotbar-slot { width: 85px; height: 80px; background: rgba(248, 250, 252, 0.9); border: 2px solid rgba(15, 23, 42, 0.1); border-radius: 6px; color: #334155; position: relative; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 6px 2px; box-sizing: border-box; }
+        .hotbar-slot.active { background: rgba(14, 165, 233, 0.15); border: 2px solid #0ea5e9; box-shadow: 0 0 12px rgba(14, 165, 233, 0.3); color: #0f172a; }
+        .slot-number { position: absolute; top: 3px; left: 5px; font-size: 11px; font-weight: bold; color: rgba(15, 23, 42, 0.3); }
         .slot-name { font-size: 11px; font-weight: bold; text-align: center; }
         .weapon-logo { width: 40px; height: 25px; position: relative; margin-top: 10px; display: flex; justify-content: center; align-items: center; }
-        .logo-pistol { width: 18px; height: 10px; background: #666; border-radius: 2px; }
-        .logo-rifle { width: 30px; height: 6px; background: #445533; }
-        .logo-sniper { width: 36px; height: 4px; background: #222; }
-        .logo-shotgun { width: 28px; height: 8px; background: #664422; }
-        .logo-knife { width: 28px; height: 5px; background: #999; }
+        .logo-pistol { width: 18px; height: 10px; background: #64748b; border-radius: 2px; }
+        .logo-rifle { width: 30px; height: 6px; background: #334155; }
+        .logo-sniper { width: 36px; height: 4px; background: #0f172a; }
+        .logo-shotgun { width: 28px; height: 8px; background: #78350f; }
+        .logo-knife { width: 28px; height: 5px; background: #94a3b8; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 
-    <!-- Main Game Menu Selector -->
     <div id="blocker">
         <div id="menu-panel">
-            <h1>CYBER RANGE 3D</h1>
-            <p style="color: #555; font-size: 14px;">Select your tactical simulation mode before launching:</p>
+            <h1>ALPINE RANGE 3D</h1>
+            <p style="color: #475569; font-size: 14px;">Select your tactical simulation mode before launching:</p>
             
             <div class="mode-selection-container">
                 <div class="mode-card selected" id="card-solo" onclick="setMatchMode('solo')">
                     <h3>SOLO RUN</h3>
-                    <p>Standard isolated gunplay field training with security hostiles.</p>
+                    <p>Standard isolated field training with automated defense targets.</p>
                 </div>
                 <div class="mode-card" id="card-multi" onclick="setMatchMode('multi')">
                     <h3>MULTIPLAYER</h3>
@@ -161,7 +158,6 @@
                 </div>
             </div>
 
-            <!-- Dedicated Multi-Connection Management Hub Box -->
             <div id="network-setup-box">
                 <h3>TACTICAL MULTIPLAYER HUB</h3>
                 <div class="net-action-row">
@@ -183,7 +179,6 @@
         </div>
     </div>
 
-    <!-- Overviews Overlay -->
     <div id="settings-overlay">
         <div class="settings-box">
             <h2>OVERVIEWS OF THIS GAME</h2>
@@ -203,7 +198,6 @@
         </div>
     </div>
 
-    <!-- Weapon Hotbar -->
     <div id="roblox-hotbar">
         <div class="hotbar-slot active" id="slot-pistol" onclick="selectWeapon('pistol')"><span class="slot-number">1</span><div class="weapon-logo"><div class="logo-pistol"></div></div><span class="slot-name">Laser Pistol</span></div>
         <div class="hotbar-slot" id="slot-autoRifle" onclick="selectWeapon('autoRifle')"><span class="slot-number">2</span><div class="weapon-logo"><div class="logo-rifle"></div></div><span class="slot-name">Auto Rifle</span></div>
@@ -293,16 +287,16 @@
 
         function initEngineBase() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xe5e7eb);
-            scene.fog = new THREE.FogExp2(0xe5e7eb, 0.015);
+            scene.background = new THREE.Color(0xd0e8f5); // Delicate clear sky blue
+            scene.fog = new THREE.FogExp2(0xd0e8f5, 0.012);
 
             camera = new THREE.PerspectiveCamera(DEFAULT_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, STAND_HEIGHT, 0); 
+            camera.position.set(-20, STAND_HEIGHT, 0); // Spawn safely to the left of the river channel
 
-            const ambientLight = new THREE.AmbientLight(0xaaaaaa); scene.add(ambientLight);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(30, 60, 20); scene.add(dirLight);
+            const ambientLight = new THREE.AmbientLight(0xfffdfa, 0.9); scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xfffaed, 1.1); dirLight.position.set(40, 80, 20); scene.add(dirLight);
 
-            buildArsenalWarehouseEnvironment();
+            buildAlpineMeadowEnvironment();
 
             gunContainer = new THREE.Group();
             resetGunInertialPosition();
@@ -324,7 +318,6 @@
                 }
             });
 
-            // FIXED POINTERLOCK LISTENER TO ARREST PREMATURE ENGINE LOOPS
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement === document.body) {
                     settingsMenuOpen = false;
@@ -374,66 +367,144 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        function buildArsenalWarehouseEnvironment() {
-            const floorGeo = new THREE.PlaneGeometry(160, 160);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.8, metalness: 0.1 });
+        function buildAlpineMeadowEnvironment() {
+            // Main Soft Grass Meadow Ground
+            const floorGeo = new THREE.PlaneGeometry(180, 180);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x789262, roughness: 0.9, metalness: 0.05 }); // Delicate green sage grass
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotateX(-Math.PI / 2);
             scene.add(floor);
 
-            const gridHelper = new THREE.GridHelper(160, 40, 0x8899aa, 0xd1d5db);
-            gridHelper.position.y = 0.01;
-            scene.add(gridHelper);
+            // Natural Landscape Outer Boundaries
+            const cliffMat = new THREE.MeshStandardMaterial({ color: 0x8fa09a, roughness: 0.8 });
+            const boundN = new THREE.Mesh(new THREE.BoxGeometry(180, 16, 2), cliffMat); boundN.position.set(0, 8, -90); scene.add(boundN);
+            const boundS = new THREE.Mesh(new THREE.BoxGeometry(180, 16, 2), cliffMat); boundS.position.set(0, 8, 90); scene.add(boundS);
+            const boundE = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 180), cliffMat); boundE.position.set(90, 8, 0); scene.add(boundE);
+            const boundW = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 180), cliffMat); boundW.position.set(-90, 8, 0); scene.add(boundW);
 
-            const boundaryWallMat = new THREE.MeshStandardMaterial({ color: 0xbdc3c7, roughness: 0.7 });
-            
-            const wallN = new THREE.Mesh(new THREE.BoxGeometry(160, 14, 2), boundaryWallMat);
-            wallN.position.set(0, 7, -80); scene.add(wallN);
-            
-            const wallS = new THREE.Mesh(new THREE.BoxGeometry(160, 14, 2), boundaryWallMat);
-            wallS.position.set(0, 7, 80); scene.add(wallS);
-            
-            const wallE = new THREE.Mesh(new THREE.BoxGeometry(2, 14, 160), boundaryWallMat);
-            wallE.position.set(80, 7, 0); scene.add(wallE);
-            
-            const wallW = new THREE.Mesh(new THREE.BoxGeometry(2, 14, 160), boundaryWallMat);
-            wallW.position.set(-80, 7, 0); scene.add(wallW);
+            // --- THE MIDDLE RIVER CONSTRAINTS ---
+            // Visual water bed strip splitting area in half (X from -6 to 6, spanning Z from boundary to boundary)
+            const riverGeo = new THREE.PlaneGeometry(12, 180);
+            const riverMat = new THREE.MeshStandardMaterial({ color: 0x5a9cb8, roughness: 0.2, metalness: 0.8, transparent: true, opacity: 0.85 });
+            const river = new THREE.Mesh(riverGeo, riverMat);
+            river.rotateX(-Math.PI / 2);
+            river.position.set(0, 0.02, 0); // Sits slightly over floor mesh
+            scene.add(river);
 
-            generateTacticalCrate(16, 6, 16, 0, 3, 0, 0x7e8896); 
-            generateTacticalCrate(14, 0.4, 14, 0, 6.2, 0, 0x505863); 
+            // Physical Invisible River Banks (Collidable obstacles preventing player crossing without bridge points)
+            generateInvisibleRiverWall(-6, 0); // Left wall border 
+            generateInvisibleRiverWall(6, 0);  // Right wall border
 
-            const stepsCount = 12;
-            const startZ = 8.5;
-            const startY = 0.25;
-            for(let i=0; i<stepsCount; i++) {
-                generateTacticalCrate(3, 0.5, 0.8, 6.5, startY + (i*0.5), startZ + (i*0.6), 0x555c66);
+            // --- CROSSING POINTS (BRIDGES) ---
+            // Main Central Walkway Bridge crossing the center river trench
+            generateTacticalCrate(14, 0.4, 8, 0, 0.2, 0, 0x927b68); // Center bridge structure
+            generateTacticalCrate(14, 0.4, 6, 0, 0.2, -45, 0x5c5045); // North side secondary crossing bridge
+            generateTacticalCrate(14, 0.4, 6, 0, 0.2, 45, 0x5c5045); // South side tertiary crossing bridge
+
+            // --- RANDOM LOW-POLY NATURE TREE GENERATION ---
+            const treePositions = [
+                [-45, -60], [-55, -40], [-25, -70], [-65, -15], [-30, -35], [-20, -15], [-50, 20], [-65, 55], [-35, 45], [-22, 65],
+                [35, -55], [55, -35], [22, -65], [65, -10], [40, -25], [25, 20], [55, 15], [30, 50], [65, 40], [45, 65], [22, 35]
+            ];
+            treePositions.forEach(pos => spawnNatureTree(pos[0], pos[1]));
+
+            // --- EXPANDED HIGH-DENSITY TACTICAL OBSTACLES ---
+            // Left Side Cover Distribution
+            generateTacticalCrate(5, 5, 5, -25, 2.5, -30, 0x8ca3a6);
+            generateTacticalCrate(4, 4, 8, -40, 2.0, -10, 0x73888a);
+            generateTacticalCrate(6, 3, 6, -15, 1.5, 25, 0x5d6e70);
+            generateTacticalCrate(5, 8, 5, -35, 4.0, 50, 0x8ca3a6);
+            generateTacticalCrate(8, 4, 4, -55, 2.0, -45, 0x4e5b5c);
+            generateTacticalCrate(3, 3, 3, -20, 1.5, -55, 0x8ca3a6);
+            generateTacticalCrate(4, 6, 4, -50, 3.0, 10, 0x73888a);
+            generateTacticalCrate(7, 4, 7, -12, 2.0, -5, 0x5d6e70);
+            generateTacticalCrate(5, 5, 5, -40, 2.5, 30, 0x4e5b5c);
+
+            // Right Side Cover Distribution
+            generateTacticalCrate(6, 6, 6, 35, 3.0, -20, 0x9ca8a2);
+            generateTacticalCrate(4, 8, 4, 20, 4.0, -45, 0x7a8580);
+            generateTacticalCrate(5, 4, 9, 50, 2.0, 15, 0x616a66);
+            generateTacticalCrate(8, 4, 4, 25, 2.0, 35, 0x9ca8a2);
+            generateTacticalCrate(4, 4, 4, 15, 2.0, -15, 0x4b524f);
+            generateTacticalCrate(6, 3, 6, 40, 1.5, -50, 0x7a8580);
+            generateTacticalCrate(3, 5, 3, 55, 2.5, -5, 0x616a66);
+            generateTacticalCrate(5, 5, 5, 16, 2.5, 60, 0x9ca8a2);
+            generateTacticalCrate(7, 4, 5, 45, 2.0, 55, 0x4b524f);
+
+            // --- STEP ACCESSIBLE TACTICAL OBSERVATION TOWERS ---
+            buildSniperTowerInstance(-35, -35);
+            buildSniperTowerInstance(45, 25);
+        }
+
+        function generateInvisibleRiverWall(x, z) {
+            // Creates the collision tracking box profile across the bounds but skips over the bridge coordinates
+            const chunkLength = 24; 
+            const wallGeometry = new THREE.BoxGeometry(0.2, 10, chunkLength);
+            const wallMaterial = new THREE.MeshBasicMaterial({ visible: false });
+
+            // Generate bounding segments avoiding the bridge openings at Z = 0, Z = -45, and Z = 45
+            const centers = [-70, -22, 22, 70];
+            centers.forEach(c => {
+                const wallSegment = new THREE.Mesh(wallGeometry, wallMaterial);
+                wallSegment.position.set(x, 5, c);
+                scene.add(wallSegment);
+                obstacles.push(wallSegment);
+            });
+        }
+
+        function spawnNatureTree(x, z) {
+            const treeGroup = new THREE.Group();
+            treeGroup.position.set(x, 0, z);
+
+            // Physical Trunk Base
+            const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 4, 5);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 2;
+            treeGroup.add(trunk);
+
+            // Foliage Outer Core
+            const foliageGeo = new THREE.ConeGeometry(2.2, 5, 5);
+            const foliageMat = new THREE.MeshStandardMaterial({ color: 0x4d6641, roughness: 0.85, flatShading: true });
+            const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+            foliage.position.y = 5;
+            treeGroup.add(foliage);
+
+            scene.add(treeGroup);
+            
+            // Add the solid trunk reference to the collision matrix array
+            obstacles.push(trunk);
+        }
+
+        function buildSniperTowerInstance(x, z) {
+            // Primary elevated floor deck platform
+            generateTacticalCrate(8, 0.4, 8, x, 4.0, z, 0x736357);
+            
+            // Supporting structural stilts
+            generateTacticalCrate(0.4, 4.0, 0.4, x - 3.8, 2.0, z - 3.8, 0x423831);
+            generateTacticalCrate(0.4, 4.0, 0.4, x + 3.8, 2.0, z - 3.8, 0x423831);
+            generateTacticalCrate(0.4, 4.0, 0.4, x - 3.8, 2.0, z + 3.8, 0x423831);
+            generateTacticalCrate(0.4, 4.0, 0.4, x + 3.8, 2.0, z + 3.8, 0x423831);
+
+            // Modular physically climbing stairs (Heights increment uniformly at 0.40m to balance tracking checks smoothly)
+            const stepsCount = 10;
+            for(let i = 0; i < stepsCount; i++) {
+                generateTacticalCrate(2.5, 0.4, 0.8, x + 5.2, 0.2 + (i * 0.4), z - 3.5 + (i * 0.75), 0x544941);
             }
-
-            generateTacticalCrate(12, 6, 12, -25, 3, -20, 0x707a8a);
-            generateTacticalCrate(8, 8, 8, 30, 4, -40, 0x5a6370);
-            generateTacticalCrate(16, 5, 6, -35, 2.5, 30, 0x828d9e);
-            generateTacticalCrate(10, 5, 10, 25, 2.5, 20, 0x616b75);
-            generateTacticalCrate(6, 9, 6, 0, 4.5, -45, 0x939da8);
-            generateTacticalCrate(14, 6, 14, 45, 3, 5, 0x76818c);
-            generateTacticalCrate(22, 5, 8, -5, 2.5, 45, 0x485059);
-            
-            generateTacticalCrate(5, 5, 5, -15, 2.5, -50, 0x6b7280);
-            generateTacticalCrate(4, 4, 4, -45, 2, -10, 0x4b5563);
-            generateTacticalCrate(6, 6, 6, 50, 3, -25, 0x374151);
         }
 
         function generateTacticalCrate(w, h, d, x, y, z, col) {
             const crateGeo = new THREE.BoxGeometry(w, h, d);
-            const crateMat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.6, metalness: 0.3 });
+            const crateMat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.7, metalness: 0.15 });
             const crate = new THREE.Mesh(crateGeo, crateMat);
             crate.position.set(x, y, z);
             scene.add(crate);
             obstacles.push(crate); 
 
-            const lineGeo = new THREE.BoxGeometry(w + 0.05, 0.2, d + 0.05);
-            const lineMat = new THREE.MeshBasicMaterial({ color: 0x7c8796 });
+            const lineGeo = new THREE.BoxGeometry(w + 0.03, 0.08, d + 0.03);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
             const lineMesh = new THREE.Mesh(lineGeo, lineMat);
-            lineMesh.position.set(x, y + h/2 - 0.1, z);
+            lineMesh.position.set(x, y + h/2 - 0.04, z);
             scene.add(lineMesh);
         }
 
@@ -505,7 +576,7 @@
         function syncRemoteClientData(data) {
             if(!remotePlayers[data.id]) {
                 const group = new THREE.Group();
-                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), new THREE.MeshStandardMaterial({ color: 0x0077aa }));
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), new THREE.MeshStandardMaterial({ color: 0x0ea5e9 }));
                 torso.position.y = 1.45; group.add(torso);
                 scene.add(group);
                 remotePlayers[data.id] = { mesh: group };
@@ -517,14 +588,13 @@
         function launchGameModeDeployment() {
             clearSimulationEntities();
 
-            for (let i = 0; i < 10; i++) spawnTarget();
+            for (let i = 0; i < 12; i++) spawnTarget();
             for (let i = 0; i < 15; i++) spawnEnemyHumanoid();
 
             if (selectedMode === 'multi' && dataConnections.length === 0) {
                 activeSimulationRunning = true;
                 openSettingsMenu();
             } else {
-                // LOCK MOUSE POINTER DIRECTLY BEFORE THROWING HUD BLOCKERS AWAY
                 document.body.requestPointerLock();
                 activeSimulationRunning = true;
                 settingsMenuOpen = false;
@@ -596,9 +666,9 @@
 
         function buildGunMesh() {
             while(gunContainer.children.length > 0){ gunContainer.remove(gunContainer.children[0]); }
-            const darkSteel = new THREE.MeshStandardMaterial({ color: 0x18181c, roughness: 0.5, metalness: 0.8 });
-            const brightChr = new THREE.MeshStandardMaterial({ color: 0x9999a2, roughness: 0.2, metalness: 0.9 });
-            const polyComposite = new THREE.MeshStandardMaterial({ color: 0x282c35, roughness: 0.7, metalness: 0.2 });
+            const darkSteel = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5, metalness: 0.8 });
+            const brightChr = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.9 });
+            const polyComposite = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7, metalness: 0.2 });
             
             if (currentWeapon === 'pistol') {
                 const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.24), polyComposite);
@@ -700,10 +770,13 @@
 
         function spawnTarget() {
             const targetGroup = new THREE.Group(); const size = 0.6;
-            const targetMesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshStandardMaterial({ color: 0x3366ff })); 
+            const targetMesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshStandardMaterial({ color: 0x0284c7 })); 
             targetGroup.add(targetMesh);
-            createEntityHealthUI(targetGroup, size, 100, 0x3366ff, false);
-            targetGroup.position.set((Math.random() - 0.5) * 120, size + 1, (Math.random() - 0.5) * 120);
+            createEntityHealthUI(targetGroup, size, 100, 0x0284c7, false);
+            
+            // Random distribution on either the left or right banks safely away from the river water column
+            let spawnX = (Math.random() > 0.5) ? (12 + Math.random() * 65) : (-12 - Math.random() * 65);
+            targetGroup.position.set(spawnX, size + 1, (Math.random() - 0.5) * 150);
             targetGroup.userData.meshLink = targetMesh;
             scene.add(targetGroup); targets.push(targetGroup);
         }
@@ -712,9 +785,9 @@
             if (enemies.length >= 25) return;
 
             const enemyGroup = new THREE.Group();
-            const armorMat = new THREE.MeshStandardMaterial({ color: 0x3a4454, roughness: 0.4, metalness: 0.7 }); 
-            const underJointMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.6 }); 
-            const lensNeonMat = new THREE.MeshBasicMaterial({ color: 0xef4444 }); 
+            const armorMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4, metalness: 0.7 }); 
+            const underJointMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 }); 
+            const lensNeonMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e }); 
             
             const hitboxes = [];
 
@@ -736,165 +809,4 @@
 
             const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.8), armorMat);
             leftLeg.position.set(-0.24, 0.6, 0);
-            enemyGroup.add(leftLeg); hitboxes.push(leftLeg);
-
-            const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.8), armorMat);
-            rightLeg.position.set(0.24, 0.6, 0);
-            enemyGroup.add(rightLeg); hitboxes.push(rightLeg);
-
-            const ringGeo = new THREE.TorusGeometry(0.5, 0.02, 4, 24);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true });
-            const energyRing = new THREE.Mesh(ringGeo, ringMat);
-            energyRing.position.y = 1.5; energyRing.rotation.x = Math.PI/2;
-            enemyGroup.add(energyRing);
-
-            createEntityHealthUI(enemyGroup, 1.2, 120, 0x3a4454, true);
-            
-            enemyGroup.userData = Object.assign({}, enemyGroup.userData, {
-                isEnemy: true, health: 120, maxHealth: 120, dead: false, meshLink: armorChest, hitboxes: hitboxes, patrolTimer: 0,
-                moveDir: new THREE.Vector3((Math.random()-0.5), 0, (Math.random()-0.5)).normalize(), lastShotTime: 0, leftLegLink: leftLeg, rightLegLink: rightLeg, cosmeticRing: energyRing
-            });
-            
-            let randX = (Math.random() - 0.5) * 130;
-            let randZ = (Math.random() - 0.5) * 130;
-            if(Math.abs(randX) < 15) randX += 25;
-            if(Math.abs(randZ) < 15) randZ += 25;
-
-            enemyGroup.position.set(randX, 0, randZ);
-            scene.add(enemyGroup); enemies.push(enemyGroup);
-        }
-
-        function createEntityHealthUI(group, size, maxHP, col, isBot) {
-            const barWidth = size * 1.5, barHeight = 0.12; const healthBarGroup = new THREE.Group(); healthBarGroup.position.y = size + (isBot ? 1.3 : 0.4);
-            const barBg = new THREE.Mesh(new THREE.PlaneGeometry(barWidth, barHeight), new THREE.MeshBasicMaterial({ color: 0x51111, side: THREE.DoubleSide })); healthBarGroup.add(barBg);
-            const barFg = new THREE.Mesh(new THREE.PlaneGeometry(barWidth, barHeight), new THREE.MeshBasicMaterial({ color: 0x00cc44, side: THREE.DoubleSide })); barFg.position.z = 0.01; healthBarGroup.add(barFg);
-            group.add(healthBarGroup);
-            group.userData = {
-                health: maxHP, maxHealth: maxHP, dead: false, healthBarContainer: healthBarGroup, healthBarForeground: barFg, barWidth: barWidth,
-                spinX: ((Math.random() - 0.5) * 2) * OBJECT_SLOWDOWN_MODIFIER, spinY: ((Math.random() - 0.5) * 2) * OBJECT_SLOWDOWN_MODIFIER
-            };
-        }
-
-        function forceRenderHUDUpdate() {
-            hpBarFg.style.width = (playerHP / MAX_PLAYER_HP * 100) + "%"; 
-            hpText.innerText = playerHP + "/" + MAX_PLAYER_HP;
-        }
-
-        function damagePlayer(amount) {
-            if (isShielding || !activeSimulationRunning || document.pointerLockElement !== document.body) return; 
-            playerHP -= amount; if (playerHP < 0) playerHP = 0;
-            forceRenderHUDUpdate();
-            if (playerHP <= 0) {
-                playerHP = MAX_PLAYER_HP; score = 0; scoreElement.innerText = score; forceRenderHUDUpdate();
-                currentAmmo = MAX_AMMO; ammoCountElement.innerText = currentAmmo;
-                camera.position.set(0, STAND_HEIGHT, 0);
-            }
-        }
-
-        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
-
-        function animateLoop() {
-            requestAnimationFrame(animateLoop);
-            const time = performance.now();
-
-            // PREVENT RUNNING MOVEMENT CALCULATIONS UNTIL THE POINTER LOCK IS ACCEPTED
-            if (activeSimulationRunning && !settingsMenuOpen && document.pointerLockElement === document.body) {
-                const delta = (time - prevTime) / 1000;
-                if (isLeftMouseDown && WEAPONS[currentWeapon].isAuto) shoot();
-
-                if (isReloading && time - reloadStartTime >= RELOAD_DURATION) {
-                    currentAmmo = MAX_AMMO; ammoCountElement.innerText = currentAmmo; isReloading = false; reloadWarning.style.display = 'none';
-                }
-
-                if (time - lastRegenTime >= 2000) {
-                    lastRegenTime = time; if (playerHP > 0 && playerHP < MAX_PLAYER_HP) { playerHP = Math.min(MAX_PLAYER_HP, playerHP + 10); forceRenderHUDUpdate(); }
-                }
-
-                const targetBaseHeight = isKneeling ? KNEE_HEIGHT : STAND_HEIGHT;
-                currentBaseHeight += (targetBaseHeight - currentBaseHeight) * 12.0 * delta;
-
-                velocity.x -= velocity.x * 10.0 * delta; velocity.z -= velocity.z * 10.0 * delta; velocity.y -= 9.8 * 3.5 * delta; 
-
-                const moveVector = new THREE.Vector3(0, 0, 0);
-                if (keysPressed.KeyW) moveVector.z -= 1;
-                if (keysPressed.KeyS) moveVector.z += 1;
-                if (keysPressed.KeyA) moveVector.x += 1; 
-                if (keysPressed.KeyD) moveVector.x -= 1; 
-
-                if (moveVector.lengthSq() > 0) {
-                    moveVector.normalize(); 
-                    const camYaw = new THREE.Vector3(); camera.getWorldDirection(camYaw); camYaw.y = 0; camYaw.normalize();
-                    const camRight = new THREE.Vector3().crossVectors(camYaw, camera.up).negate();
-                    const translationTarget = new THREE.Vector3();
-                    translationTarget.addScaledVector(camYaw, -moveVector.z); translationTarget.addScaledVector(camRight, moveVector.x); translationTarget.normalize();
-
-                    let movementSpeed = 69.12; 
-                    if (isShielding) movementSpeed *= 0.45; 
-                    if (isKneeling) movementSpeed *= 0.5; 
-                    velocity.addScaledVector(translationTarget, movementSpeed * delta);
-                }
-
-                camera.position.x += velocity.x * delta; camera.position.z += velocity.z * delta; camera.position.y += velocity.y * delta; 
-                
-                if (camera.position.y < currentBaseHeight) { velocity.y = 0; camera.position.y = currentBaseHeight; canJump = true; }
-
-                obstacles.forEach(obs => {
-                    const box = new THREE.Box3().setFromObject(obs);
-                    if (camera.position.x >= box.min.x - 0.4 && camera.position.x <= box.max.x + 0.4 &&
-                        camera.position.z >= box.min.z - 0.4 && camera.position.z <= box.max.z + 0.4) {
-                        if (camera.position.y <= box.max.y + currentBaseHeight && camera.position.y >= box.max.y - 0.5) {
-                            camera.position.y = box.max.y + currentBaseHeight;
-                            velocity.y = 0;
-                            canJump = true;
-                        }
-                    }
-                });
-
-                camera.position.x = Math.max(-78, Math.min(78, camera.position.x));
-                camera.position.z = Math.max(-78, Math.min(78, camera.position.z));
-
-                broadcastMovementPacket();
-
-                targets.forEach((t) => {
-                    if(t.userData && t.userData.healthBarContainer) t.userData.healthBarContainer.quaternion.copy(camera.quaternion);
-                });
-
-                enemies.forEach((enemy) => {
-                    if (enemy.userData.dead) return;
-                    enemy.userData.patrolTimer -= delta;
-                    if(enemy.userData.patrolTimer <= 0) {
-                        enemy.userData.patrolTimer = Math.random() * 3 + 2;
-                        enemy.userData.moveDir.set((Math.random()-0.5), 0, (Math.random()-0.5)).normalize();
-                    }
-                    enemy.position.addScaledVector(enemy.userData.moveDir, 4.5 * delta);
-                    enemy.position.x = Math.max(-76, Math.min(76, enemy.position.x));
-                    enemy.position.z = Math.max(-76, Math.min(76, enemy.position.z));
-
-                    if(enemy.userData.leftLegLink) enemy.userData.leftLegLink.rotation.x = Math.sin(time * 0.007) * 0.4;
-                    if(enemy.userData.rightLegLink) enemy.userData.rightLegLink.rotation.x = -Math.sin(time * 0.007) * 0.4;
-                    if(enemy.userData.cosmeticRing) enemy.userData.cosmeticRing.rotation.z += 0.02;
-
-                    enemy.lookAt(camera.position.x, enemy.position.y, camera.position.z);
-                    if(enemy.userData.healthBarContainer) enemy.userData.healthBarContainer.quaternion.copy(camera.quaternion);
-
-                    if (enemy.position.distanceTo(camera.position) < 48 && time - enemy.userData.lastShotTime > 1500) { 
-                        enemy.userData.lastShotTime = time;
-                        const eyeRay = new THREE.Raycaster();
-                        const eyeDirection = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
-                        eyeRay.set(enemy.position, eyeDirection);
-                        const intercepts = eyeRay.intersectObjects(obstacles);
-                        if (intercepts.length === 0 || intercepts[0].distance > enemy.position.distanceTo(camera.position)) {
-                            const laserPoints = [new THREE.Vector3(enemy.position.x, enemy.position.y + 1.5, enemy.position.z), new THREE.Vector3(camera.position.x, camera.position.y - 0.2, camera.position.z)];
-                            const laserLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(laserPoints), new THREE.LineBasicMaterial({ color: 0xff0033 }));
-                            scene.add(laserLine); setTimeout(() => scene.remove(laserLine), 70);
-                            if (!isShielding) damagePlayer(5); 
-                        }
-                    }
-                });
-            }
-            prevTime = time;
-            if (renderer && scene && camera) renderer.render(scene, camera);
-        }
-    </script>
-</body>
-</html>
+            enemyGroup.add(leftLeg); hit
