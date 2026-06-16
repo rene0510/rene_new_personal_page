@@ -224,6 +224,14 @@
         <div id="score-display">SCORE: <span id="score">0</span></div>
         <div id="ammo-display">AMMO: <span id="ammo-count">20</span> / 20</div>
     </div>
+    
+        <div id="canvas-container">
+        <div id="instructions">
+            <h1 style="font-size: 24px; margin-bottom: 10px;">CLICK TO PLAY MAP PREVIEW</h1>
+            <p>WASD / Arrows = Move | Mouse = Look Around</p>
+        </div>
+        <div id="crosshair"></div>
+    </div>
 
     <script>
         let scene, camera, renderer;
@@ -996,6 +1004,6 @@
             prevTime = time;
             if (renderer && scene && camera) renderer.render(scene, camera);
         }
-    </script>
+</script>
 </body>
 </html>
