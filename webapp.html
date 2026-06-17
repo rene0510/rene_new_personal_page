@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Alpine Range Pro (Solo Inverted)</title>
+    <title>FPS-solo</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -11,6 +11,20 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
+
+        .u{
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            bottom: 40px;
+            right: 40px;
+            background-color: #fff2e9;
+            color: #3b2a22;
+            text-align: center;
+            box-shadow: 2px 2px 3px #cf7e86;
+            z-index: 100;
+        }
+
         
         /* --- Pre-Game Blocker --- */
         #blocker {
@@ -102,6 +116,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+     <header> 
+    <a href="webapp.html" class="u">
+        <span class="u">To Gamimg app</span>
+    </a>
+      
+    </header>
+
 
     <div id="blocker">
         <div id="menu-panel">
