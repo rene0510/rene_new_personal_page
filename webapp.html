@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Alpine Range Pro</title>
+    <title>3D WebGL FPS - Alpine Range Pro (Solo)</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -42,53 +42,15 @@
             margin-top: 0; color: #0ea5e9; letter-spacing: 4px;
             font-size: 34px; text-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
         }
-        
-        .mode-selection-container {
-            display: flex; gap: 20px; justify-content: center; margin: 25px 0;
-        }
-        .mode-card {
-            border: 2px solid rgba(15, 23, 42, 0.1); border-radius: 8px;
-            padding: 15px 20px; width: 180px; cursor: pointer; transition: all 0.2s;
-            background: rgba(15, 23, 42, 0.02);
-        }
-        .mode-card:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
-        .mode-card.selected { border-color: #0ea5e9; background: rgba(14, 165, 233, 0.1); }
-        .mode-card h3 { margin: 0 0 8px 0; color: #0f172a; }
-        .mode-card p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.4; }
 
         .start-btn {
             background: #0ea5e9; color: #fff; border: none;
             padding: 15px 45px; font-size: 18px; font-weight: bold;
-            border-radius: 6px; cursor: pointer; margin-top: 10px;
+            border-radius: 6px; cursor: pointer; margin-top: 20px;
             letter-spacing: 2px; transition: all 0.2s ease;
             box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
         }
         .start-btn:hover { background: #0f172a; color: #fff; transform: scale(1.02); }
-        
-        /* --- Network Hub Panel --- */
-        #network-setup-box {
-            display: none; background: rgba(15, 23, 42, 0.02);
-            border: 1px dashed rgba(14, 165, 233, 0.5);
-            border-radius: 6px; padding: 15px; margin: 20px 0; text-align: left;
-        }
-        #network-setup-box h3 { margin: 0 0 12px 0; color: #0ea5e9; font-size: 15px; letter-spacing: 1px; }
-        .net-action-row { display: flex; gap: 10px; margin-bottom: 12px; }
-        .net-action-row button {
-            background: #fff; border: 1px solid #0ea5e9; color: #0ea5e9;
-            padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;
-        }
-        .net-action-row button:hover { background: rgba(14, 165, 233, 0.08); }
-        .connect-input-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-        .connect-input-row input {
-            background: #fff; border: 1px solid #0ea5e9; color: #0f172a;
-            padding: 8px; border-radius: 4px; font-weight: bold; outline: none; width: 140px; text-align: center; font-size: 16px;
-        }
-        .connect-input-row button {
-            background: #0ea5e9; color: #fff; border: none; padding: 8px 16px;
-            font-weight: bold; border-radius: 4px; cursor: pointer;
-        }
-        .code-highlight { font-family: monospace; font-size: 20px; color: #10b981; font-weight: bold; letter-spacing: 1px; }
-        #net-status-label { font-size: 12px; color: #64748b; margin-top: 8px; display: block; }
 
         /* --- Overviews Panel --- */
         #settings-overlay {
@@ -151,50 +113,21 @@
         .logo-knife { width: 28px; height: 5px; background: #94a3b8; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 
     <div id="blocker">
         <div id="menu-panel">
             <h1>ALPINE RANGE 3D</h1>
-            <p style="color: #475569; font-size: 14px;">Select your tactical simulation mode before launching:</p>
-            
-            <div class="mode-selection-container">
-                <div class="mode-card selected" id="card-solo" onclick="setMatchMode('solo')">
-                    <h3>SOLO RUN</h3>
-                    <p>Standard isolated field training with automated defense targets.</p>
-                </div>
-                <div class="mode-card" id="card-multi" onclick="setMatchMode('multi')">
-                    <h3>MULTIPLAYER</h3>
-                    <p>Host or Link directly to a friend using direct WebRTC keys.</p>
-                </div>
-            </div>
+            <p style="color: #475569; font-size: 14px;">Solo field training with automated defense targets.</p>
+            <button class="start-btn" id="start-button">START SOLO RUN</button>
+            <h1 style="font-size: 18px; margin-top: 30px; color: #64748b;">This is my website</h1> 
+        </div>
+    </div>
 
-            <div id="network-setup-box">
-                <h3>TACTICAL MULTIPLAYER HUB</h3>
-                <div class="net-action-row">
-                    <button type="button" onclick="initializeHostServerInstance()">1. CREATE HOST ROOM</button>
-                </div>
-                <div style="font-size: 13px; margin-bottom: 10px;">
-                    Room Key ID: <span id="room-code-display" class="code-highlight">--- ---</span>
-                </div>
-                <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 12px 0;">
-                <div class="connect-input-row">
-                    <span>Or Join Friend:</span>
-                    <input type="text" id="target-room-input" placeholder="6-Digit Code" maxlength="6">
-                    <button type="button" onclick="joinRemoteHostInstance()">LINK UP</button>
-                </div>
-                <span id="net-status-label">Status: System Offline</span>
-            </div>
-
-            <button class="start-btn" id="start-button">START PLAYING</button>
-
-            <h1>This is my website</h1> 
-
-   <header>
+    <header>
     <a href="index.html" class="u">
-        <span class="u">To Gamimg app</span>
+        <span class="u">To Gaming app</span>
     </a>
     </header>
 
@@ -203,7 +136,7 @@
             <h2>OVERVIEWS OF THIS GAME</h2>
             
             <div class="settings-grid">
-                • <strong>W, A, S, D :</strong> Movement Vectors (Note: A and D functions are inverted)<br/>
+                • <strong>W, A, S, D :</strong> Movement Vectors<br/>
                 • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation<br/>
                 • <strong>LEFT CLICK :</strong> Discharge Active Equipped Weapon Target Raycast<br/>
                 • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers<br/>
@@ -244,17 +177,15 @@
         <div id="ammo-display">AMMO: <span id="ammo-count">20</span> / 20</div>
     </div>
     
-        <div id="canvas-container">
+    <div id="canvas-container">
         <div id="instructions">
             <h1 style="font-size: 24px; margin-bottom: 10px;">CLICK TO PLAY MAP PREVIEW</h1>
             <p>WASD / Arrows = Move | Mouse = Look Around</p>
         </div>
-        <div id="crosshair"></div>
     </div>
 
     <script>
         let scene, camera, renderer;
-        let selectedMode = 'solo'; 
         let activeSimulationRunning = false;
         let settingsMenuOpen = false;
 
@@ -268,9 +199,7 @@
         
         let lastRegenTime = performance.now(); 
         
-        let targets = [], enemies = [], remotePlayers = {}, obstacles = []; 
-        let peer = null, dataConnections = [];
-        let myNetworkId = "";
+        let targets = [], enemies = [], obstacles = []; 
 
         const MAX_AMMO = 20;
         let currentAmmo = 20;
@@ -314,11 +243,11 @@
 
         function initEngineBase() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xd0e8f5); // Delicate clear sky blue
+            scene.background = new THREE.Color(0xd0e8f5); 
             scene.fog = new THREE.FogExp2(0xd0e8f5, 0.012);
 
             camera = new THREE.PerspectiveCamera(DEFAULT_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(-20, STAND_HEIGHT, 0); // Spawn safely to the left of the river channel
+            camera.position.set(-20, STAND_HEIGHT, 0); 
 
             const ambientLight = new THREE.AmbientLight(0xfffdfa, 0.9); scene.add(ambientLight);
             const dirLight = new THREE.DirectionalLight(0xfffaed, 1.1); dirLight.position.set(40, 80, 20); scene.add(dirLight);
@@ -395,48 +324,38 @@
         }
 
         function buildAlpineMeadowEnvironment() {
-            // Main Soft Grass Meadow Ground
             const floorGeo = new THREE.PlaneGeometry(180, 180);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x789262, roughness: 0.9, metalness: 0.05 }); // Delicate green sage grass
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x789262, roughness: 0.9, metalness: 0.05 }); 
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotateX(-Math.PI / 2);
             scene.add(floor);
 
-            // Natural Landscape Outer Boundaries
             const cliffMat = new THREE.MeshStandardMaterial({ color: 0x8fa09a, roughness: 0.8 });
             const boundN = new THREE.Mesh(new THREE.BoxGeometry(180, 16, 2), cliffMat); boundN.position.set(0, 8, -90); scene.add(boundN);
             const boundS = new THREE.Mesh(new THREE.BoxGeometry(180, 16, 2), cliffMat); boundS.position.set(0, 8, 90); scene.add(boundS);
             const boundE = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 180), cliffMat); boundE.position.set(90, 8, 0); scene.add(boundE);
             const boundW = new THREE.Mesh(new THREE.BoxGeometry(2, 16, 180), cliffMat); boundW.position.set(-90, 8, 0); scene.add(boundW);
 
-            // --- THE MIDDLE RIVER CONSTRAINTS ---
-            // Visual water bed strip splitting area in half (X from -6 to 6, spanning Z from boundary to boundary)
             const riverGeo = new THREE.PlaneGeometry(12, 180);
             const riverMat = new THREE.MeshStandardMaterial({ color: 0x5a9cb8, roughness: 0.2, metalness: 0.8, transparent: true, opacity: 0.85 });
             const river = new THREE.Mesh(riverGeo, riverMat);
             river.rotateX(-Math.PI / 2);
-            river.position.set(0, 0.02, 0); // Sits slightly over floor mesh
+            river.position.set(0, 0.02, 0); 
             scene.add(river);
 
-            // Physical Invisible River Banks (Collidable obstacles preventing player crossing without bridge points)
-            generateInvisibleRiverWall(-6, 0); // Left wall border 
-            generateInvisibleRiverWall(6, 0);  // Right wall border
+            generateInvisibleRiverWall(-6, 0); 
+            generateInvisibleRiverWall(6, 0);  
 
-            // --- CROSSING POINTS (BRIDGES) ---
-            // Main Central Walkway Bridge crossing the center river trench
-            generateTacticalCrate(14, 0.4, 8, 0, 0.2, 0, 0x927b68); // Center bridge structure
-            generateTacticalCrate(14, 0.4, 6, 0, 0.2, -45, 0x5c5045); // North side secondary crossing bridge
-            generateTacticalCrate(14, 0.4, 6, 0, 0.2, 45, 0x5c5045); // South side tertiary crossing bridge
+            generateTacticalCrate(14, 0.4, 8, 0, 0.2, 0, 0x927b68); 
+            generateTacticalCrate(14, 0.4, 6, 0, 0.2, -45, 0x5c5045); 
+            generateTacticalCrate(14, 0.4, 6, 0, 0.2, 45, 0x5c5045); 
 
-            // --- RANDOM LOW-POLY NATURE TREE GENERATION ---
             const treePositions = [
                 [-45, -60], [-55, -40], [-25, -70], [-65, -15], [-30, -35], [-20, -15], [-50, 20], [-65, 55], [-35, 45], [-22, 65],
                 [35, -55], [55, -35], [22, -65], [65, -10], [40, -25], [25, 20], [55, 15], [30, 50], [65, 40], [45, 65], [22, 35]
             ];
             treePositions.forEach(pos => spawnNatureTree(pos[0], pos[1]));
 
-            // --- EXPANDED HIGH-DENSITY TACTICAL OBSTACLES ---
-            // Left Side Cover Distribution
             generateTacticalCrate(5, 5, 5, -25, 2.5, -30, 0x8ca3a6);
             generateTacticalCrate(4, 4, 8, -40, 2.0, -10, 0x73888a);
             generateTacticalCrate(6, 3, 6, -15, 1.5, 25, 0x5d6e70);
@@ -447,7 +366,6 @@
             generateTacticalCrate(7, 4, 7, -12, 2.0, -5, 0x5d6e70);
             generateTacticalCrate(5, 5, 5, -40, 2.5, 30, 0x4e5b5c);
 
-            // Right Side Cover Distribution
             generateTacticalCrate(6, 6, 6, 35, 3.0, -20, 0x9ca8a2);
             generateTacticalCrate(4, 8, 4, 20, 4.0, -45, 0x7a8580);
             generateTacticalCrate(5, 4, 9, 50, 2.0, 15, 0x616a66);
@@ -458,18 +376,15 @@
             generateTacticalCrate(5, 5, 5, 16, 2.5, 60, 0x9ca8a2);
             generateTacticalCrate(7, 4, 5, 45, 2.0, 55, 0x4b524f);
 
-            // --- STEP ACCESSIBLE TACTICAL OBSERVATION TOWERS ---
             buildSniperTowerInstance(-35, -35);
             buildSniperTowerInstance(45, 25);
         }
 
         function generateInvisibleRiverWall(x, z) {
-            // Creates the collision tracking box profile across the bounds but skips over the bridge coordinates
             const chunkLength = 24; 
             const wallGeometry = new THREE.BoxGeometry(0.2, 10, chunkLength);
             const wallMaterial = new THREE.MeshBasicMaterial({ visible: false });
 
-            // Generate bounding segments avoiding the bridge openings at Z = 0, Z = -45, and Z = 45
             const centers = [-70, -22, 22, 70];
             centers.forEach(c => {
                 const wallSegment = new THREE.Mesh(wallGeometry, wallMaterial);
@@ -483,14 +398,12 @@
             const treeGroup = new THREE.Group();
             treeGroup.position.set(x, 0, z);
 
-            // Physical Trunk Base
             const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 4, 5);
             const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
             const trunk = new THREE.Mesh(trunkGeo, trunkMat);
             trunk.position.y = 2;
             treeGroup.add(trunk);
 
-            // Foliage Outer Core
             const foliageGeo = new THREE.ConeGeometry(2.2, 5, 5);
             const foliageMat = new THREE.MeshStandardMaterial({ color: 0x4d6641, roughness: 0.85, flatShading: true });
             const foliage = new THREE.Mesh(foliageGeo, foliageMat);
@@ -498,22 +411,17 @@
             treeGroup.add(foliage);
 
             scene.add(treeGroup);
-            
-            // Add the solid trunk reference to the collision matrix array
             obstacles.push(trunk);
         }
 
         function buildSniperTowerInstance(x, z) {
-            // Primary elevated floor deck platform
             generateTacticalCrate(8, 0.4, 8, x, 4.0, z, 0x736357);
             
-            // Supporting structural stilts
             generateTacticalCrate(0.4, 4.0, 0.4, x - 3.8, 2.0, z - 3.8, 0x423831);
             generateTacticalCrate(0.4, 4.0, 0.4, x + 3.8, 2.0, z - 3.8, 0x423831);
             generateTacticalCrate(0.4, 4.0, 0.4, x - 3.8, 2.0, z + 3.8, 0x423831);
             generateTacticalCrate(0.4, 4.0, 0.4, x + 3.8, 2.0, z + 3.8, 0x423831);
 
-            // Modular physically climbing stairs (Heights increment uniformly at 0.40m to balance tracking checks smoothly)
             const stepsCount = 10;
             for(let i = 0; i < stepsCount; i++) {
                 generateTacticalCrate(2.5, 0.4, 0.8, x + 5.2, 0.2 + (i * 0.4), z - 3.5 + (i * 0.75), 0x544941);
@@ -535,97 +443,15 @@
             scene.add(lineMesh);
         }
 
-        function setMatchMode(mode) {
-            selectedMode = mode;
-            document.getElementById('card-solo').classList.remove('selected');
-            document.getElementById('card-multi').classList.remove('selected');
-            document.getElementById(`card-${mode}`).classList.add('selected');
-            
-            if (mode === 'multi') {
-                document.getElementById('network-setup-box').style.display = 'block';
-            } else {
-                document.getElementById('network-setup-box').style.display = 'none';
-            }
-        }
-
-        function generate6DigitNumericalString() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        }
-
-        function initializeHostServerInstance() {
-            if (peer) peer.destroy();
-            document.getElementById('room-code-display').innerText = "ALLOCATING...";
-            const numericId = generate6DigitNumericalString();
-            peer = new Peer(numericId, { debug: 1, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-            peer.on('open', (id) => {
-                myNetworkId = id;
-                document.getElementById('room-code-display').innerText = id;
-                document.getElementById('net-status-label').innerText = "Room ready. Give your friend your Code ID!";
-            });
-            peer.on('connection', (conn) => { setupNetworkDataChannels(conn); });
-        }
-
-        function joinRemoteHostInstance() {
-            const targetCode = document.getElementById('target-room-input').value.trim();
-            if (!targetCode) return;
-            if (!peer) {
-                const numericId = generate6DigitNumericalString();
-                peer = new Peer(numericId, { debug: 1, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-                peer.on('open', () => executeOutboundRouting(targetCode));
-            } else {
-                executeOutboundRouting(targetCode);
-            }
-        }
-
-        function executeOutboundRouting(targetCode) {
-            const conn = peer.connect(targetCode, { reliable: true });
-            setupNetworkDataChannels(conn);
-        }
-
-        function setupNetworkDataChannels(conn) {
-            conn.on('open', () => {
-                if(!dataConnections.find(c => c.peer === conn.peer)) dataConnections.push(conn);
-                conn.send({ type: 'handshake', id: peer.id });
-            });
-            conn.on('data', (data) => { if(data.type === 'movement') syncRemoteClientData(data); });
-        }
-
-        function broadcastMovementPacket() {
-            if(dataConnections.length === 0 || !peer) return;
-            const payload = {
-                type: 'movement', id: peer.id,
-                x: camera.position.x, y: camera.position.y, z: camera.position.z,
-                rotY: camera.rotation.y, isKneeling: isKneeling
-            };
-            dataConnections.forEach(conn => { if(conn.open) conn.send(payload); });
-        }
-
-        function syncRemoteClientData(data) {
-            if(!remotePlayers[data.id]) {
-                const group = new THREE.Group();
-                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.4), new THREE.MeshStandardMaterial({ color: 0x0ea5e9 }));
-                torso.position.y = 1.45; group.add(torso);
-                scene.add(group);
-                remotePlayers[data.id] = { mesh: group };
-            }
-            remotePlayers[data.id].mesh.position.set(data.x, data.y, data.z);
-            remotePlayers[data.id].mesh.rotation.y = data.rotY;
-        }
-
         function launchGameModeDeployment() {
             clearSimulationEntities();
 
             for (let i = 0; i < 12; i++) spawnTarget();
             for (let i = 0; i < 15; i++) spawnEnemyHumanoid();
 
-            if (selectedMode === 'multi' && dataConnections.length === 0) {
-                activeSimulationRunning = true;
-                openSettingsMenu();
-            } else {
-                document.body.requestPointerLock();
-                activeSimulationRunning = true;
-                settingsMenuOpen = false;
-            }
+            document.body.requestPointerLock();
+            activeSimulationRunning = true;
+            settingsMenuOpen = false;
         }
 
         function openSettingsMenu() {
@@ -801,7 +627,6 @@
             targetGroup.add(targetMesh);
             createEntityHealthUI(targetGroup, size, 100, 0x0284c7, false);
             
-            // Random distribution on either the left or right banks safely away from the river water column
             let spawnX = (Math.random() > 0.5) ? (12 + Math.random() * 65) : (-12 - Math.random() * 65);
             targetGroup.position.set(spawnX, size + 1, (Math.random() - 0.5) * 150);
             targetGroup.userData.meshLink = targetMesh;
@@ -885,7 +710,7 @@
             if (playerHP <= 0) {
                 playerHP = MAX_PLAYER_HP; score = 0; scoreElement.innerText = score; forceRenderHUDUpdate();
                 currentAmmo = MAX_AMMO; ammoCountElement.innerText = currentAmmo;
-                camera.position.set(-20, STAND_HEIGHT, 0); // Reset safely out of water
+                camera.position.set(-20, STAND_HEIGHT, 0); 
             }
         }
 
@@ -915,8 +740,8 @@
                 const moveVector = new THREE.Vector3(0, 0, 0);
                 if (keysPressed.KeyW) moveVector.z -= 1;
                 if (keysPressed.KeyS) moveVector.z += 1;
-                if (keysPressed.KeyA) moveVector.x += 1; 
-                if (keysPressed.KeyD) moveVector.x -= 1; 
+                if (keysPressed.KeyA) moveVector.x -= 1; // Fixed left/right inversion calculations
+                if (keysPressed.KeyD) moveVector.x += 1; 
 
                 if (moveVector.lengthSq() > 0) {
                     moveVector.normalize(); 
@@ -931,27 +756,22 @@
                     velocity.addScaledVector(translationTarget, movementSpeed * delta);
                 }
 
-                // Temporary speculative update to verify collisions sequentially
                 const specX = camera.position.x + (velocity.x * delta);
                 const specZ = camera.position.z + (velocity.z * delta);
                 let onAnObjectFloor = false;
 
-                // Physics check against bounding boxes
                 obstacles.forEach(obs => {
                     const box = new THREE.Box3().setFromObject(obs);
                     
-                    // Standard player footprint calculation padding
                     if (specX >= box.min.x - 0.45 && specX <= box.max.x + 0.45 &&
                         specZ >= box.min.z - 0.45 && specZ <= box.max.z + 0.45) {
                         
-                        // Check if player is on top surface of obstacle
                         if (camera.position.y >= box.max.y + currentBaseHeight - 0.3) {
                             camera.position.y = box.max.y + currentBaseHeight;
                             velocity.y = 0;
                             canJump = true;
                             onAnObjectFloor = true;
                         } else {
-                            // Sideways bounce back calculation to completely eliminate wall passing bugs
                             velocity.x *= -0.2;
                             velocity.z *= -0.2;
                         }
@@ -970,11 +790,8 @@
                     }
                 }
 
-                // Map border constraints mapping
                 camera.position.x = Math.max(-88, Math.min(88, camera.position.x));
                 camera.position.z = Math.max(-88, Math.min(88, camera.position.z));
-
-                broadcastMovementPacket();
 
                 targets.forEach((t) => {
                     if(t.userData && t.userData.healthBarContainer) t.userData.healthBarContainer.quaternion.copy(camera.quaternion);
@@ -988,10 +805,9 @@
                         enemy.userData.moveDir.set((Math.random()-0.5), 0, (Math.random()-0.5)).normalize();
                     }
                     
-                    // Keep bots from running down straight inside the deep center water canal
                     const enemySpecX = enemy.position.x + (enemy.userData.moveDir.x * 4.5 * delta);
                     if (Math.abs(enemySpecX) < 7) {
-                        enemy.userData.moveDir.x *= -1; // Reverse course
+                        enemy.userData.moveDir.x *= -1; 
                     }
 
                     enemy.position.addScaledVector(enemy.userData.moveDir, 4.5 * delta);
