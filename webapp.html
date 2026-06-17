@@ -11,19 +11,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
-
-        .u{
-            position: fixed;
-            width: 60px;
-            height: 60px;
-            bottom: 40px;
-            right: 40px;
-            background-color: #fff2e9;
-            color: #3b2a22;
-            text-align: center;
-            box-shadow: 2px 2px 3px #cf7e86;
-            z-index: 100;
-        }
         
         /* --- Pre-Game Blocker --- */
         #blocker {
@@ -125,12 +112,6 @@
         </div>
     </div>
 
-    <header>
-    <a href="index.html" class="u">
-        <span class="u">To Gaming app</span>
-    </a>
-    </header>
-
     <div id="settings-overlay">
         <div class="settings-box">
             <h2>OVERVIEWS OF THIS GAME</h2>
@@ -138,7 +119,8 @@
             <div class="settings-grid">
                 • <strong>W, S :</strong> Forward / Backward Movement Vectors<br/>
                 • <strong>A, D :</strong> Left / Right Movement Vectors (Inverted Functionality)<br/>
-                • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation<br/>
+                • <strong>WASD / Arrows :</strong> Move Character Map Grid<br/>
+                • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation / Look Around<br/>
                 • <strong>LEFT CLICK :</strong> Discharge Active Equipped Weapon Target Raycast<br/>
                 • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers<br/>
                 • <strong>KEY [R] :</strong> Insert Fresh Magazine (Max 20 Bullets Core Limit)
@@ -181,7 +163,6 @@
     <div id="canvas-container">
         <div id="instructions">
             <h1 style="font-size: 24px; margin-bottom: 10px;">CLICK TO PLAY MAP PREVIEW</h1>
-            <p>WASD / Arrows = Move | Mouse = Look Around</p>
         </div>
     </div>
 
