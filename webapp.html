@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D WebGL FPS - Alpine Range Pro (Solo)</title>
+    <title>3D WebGL FPS - Alpine Range Pro (Solo Inverted)</title>
     <style>
         body {
             margin: 0; overflow: hidden;
@@ -136,7 +136,8 @@
             <h2>OVERVIEWS OF THIS GAME</h2>
             
             <div class="settings-grid">
-                • <strong>W, A, S, D :</strong> Movement Vectors<br/>
+                • <strong>W, S :</strong> Forward / Backward Movement Vectors<br/>
+                • <strong>A, D :</strong> Left / Right Movement Vectors (Inverted Functionality)<br/>
                 • <strong>MOUSE LOOK :</strong> Free-Look Aim Camera View Matrix Orientation<br/>
                 • <strong>LEFT CLICK :</strong> Discharge Active Equipped Weapon Target Raycast<br/>
                 • <strong>RIGHT CLICK :</strong> Cycle Optics Zoom Field-of-View Focal Multipliers<br/>
@@ -740,8 +741,10 @@
                 const moveVector = new THREE.Vector3(0, 0, 0);
                 if (keysPressed.KeyW) moveVector.z -= 1;
                 if (keysPressed.KeyS) moveVector.z += 1;
-                if (keysPressed.KeyA) moveVector.x -= 1; // Fixed left/right inversion calculations
-                if (keysPressed.KeyD) moveVector.x += 1; 
+                // INVERTED TRANSLATION VECTORS: 
+                // Pressing A sets moveVector.x positive (moves right), Pressing D sets it negative (moves left)
+                if (keysPressed.KeyA) moveVector.x += 1; 
+                if (keysPressed.KeyD) moveVector.x -= 1; 
 
                 if (moveVector.lengthSq() > 0) {
                     moveVector.normalize(); 
